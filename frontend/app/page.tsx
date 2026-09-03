@@ -10,7 +10,7 @@ import {
   Search, Settings, ShieldCheck, Star, Timer, Trophy, UserRound, Wifi, Wrench,
   X, type LucideIcon,
 } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type View = "inicio" | "tutoriais" | "tutorial" | "trilhas" | "exercicios" |
   "dicas" | "glossario" | "progresso" | "favoritos" | "configuracoes";
@@ -47,6 +47,8 @@ const navItems: { id: View; label: string; icon: LucideIcon }[] = [
   { id: "configuracoes", label: "Configurações", icon: Settings },
 ];
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+
 function Brand({ compact = false }: { compact?: boolean }) {
   return <div className={`brand ${compact ? "brand-compact" : ""}`}>
     <span className="brand-mark"><GraduationCap size={22} strokeWidth={2.4} /></span>
@@ -57,11 +59,40 @@ function Brand({ compact = false }: { compact?: boolean }) {
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError("");
     setLoading(true);
-    window.setTimeout(onLogin, 450);
+
+    const formData = new FormData(event.currentTarget);
+    const usuario = String(formData.get("username") ?? "");
+    const senha = String(formData.get("password") ?? "");
+    const lembrar = formData.get("remember") === "on";
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ usuario, senha, lembrar }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        setError(data?.detail ?? data?.message ?? "Login ou senha inválidos.");
+        return;
+      }
+
+      onLogin();
+    }
+    catch {
+      setError("Não foi possível conectar ao servidor de autenticação.");
+    }
+    finally {
+      setLoading(false);
+    }
   }
   return <main className="login-page"><section className="login-shell">
     <div className="login-panel">
@@ -79,6 +110,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
             <span>Lembrar de mim</span>
           </label>
         </div>
+        {error && <p className="login-error" role="alert">{error}</p>}
         <button className="primary-button login-button" type="submit" disabled={loading}>{loading ? "Entrando..." : "Entrar"}{!loading && <ArrowRight size={17} />}</button>
       </form>
       </div>
@@ -197,6 +229,39 @@ export default function Home() {
   const [view, setView] = useState<View>("inicio");
   const [mobileMenu, setMobileMenu] = useState(false);
   const [search, setSearch] = useState("");
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch(`${API_URL}/api/auth/me`, { credentials: "include" })
+      .then((response) => {
+        if (active && response.ok) {
+          setLoggedIn(true);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) {
+          setAuthChecked(true);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  function handleLogout() {
+    fetch(`${API_URL}/api/auth/logout`, { method: "POST", credentials: "include" })
+      .catch(() => undefined)
+      .finally(() => {
+        setLoggedIn(false);
+        setView("inicio");
+      });
+  }
+
+  if (!authChecked) return <main className="login-page"><section className="login-shell login-checking"><Brand /></section></main>;
   if (!loggedIn) return <LoginScreen onLogin={() => setLoggedIn(true)} />;
   const openTutorial = () => setView("tutorial");
   let content: React.ReactNode;
@@ -212,5 +277,5 @@ export default function Home() {
     case "configuracoes": content = <SettingsPage />; break;
     default: content = <Dashboard onNavigate={setView} onTutorial={openTutorial} />;
   }
-  return <div className="app-shell"><Sidebar current={view} onNavigate={setView} open={mobileMenu} onClose={() => setMobileMenu(false)} onLogout={() => { setLoggedIn(false); setView("inicio"); }} /><div className="app-main"><Topbar onMenu={() => setMobileMenu(true)} onSearch={(value) => { setSearch(value); setView("tutoriais"); }} onProfile={() => setView("configuracoes")} /><main className="page-content">{content}</main></div></div>;
+  return <div className="app-shell"><Sidebar current={view} onNavigate={setView} open={mobileMenu} onClose={() => setMobileMenu(false)} onLogout={handleLogout} /><div className="app-main"><Topbar onMenu={() => setMobileMenu(true)} onSearch={(value) => { setSearch(value); setView("tutoriais"); }} onProfile={() => setView("configuracoes")} /><main className="page-content">{content}</main></div></div>;
 }
