@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS usuarios (
+    id BIGSERIAL PRIMARY KEY,
+    ad_object_guid VARCHAR(100) UNIQUE NOT NULL,
+    login VARCHAR(100) NOT NULL,
+    nome VARCHAR(200),
+    email VARCHAR(200),
+    perfil VARCHAR(30) DEFAULT 'USUARIO',
+    ativo BOOLEAN DEFAULT TRUE,
+    ultimo_login TIMESTAMP
+);
