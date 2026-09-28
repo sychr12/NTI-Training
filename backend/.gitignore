@@ -1,13 +1,51 @@
-HELP.md
-target/
-.m2/
-.env*
-!.env.example
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# Maven: compilacao, testes, empacotamento e cache local
+/target/
+/.m2/
+*.class
+pom.xml.versionsBackup
+pom.xml.releaseBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
 
-### STS ###
+# Ambiente e configuracoes locais (podem conter credenciais)
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+/src/main/resources/application-local.properties
+/src/main/resources/application-local.yml
+/src/main/resources/application-local.yaml
+
+# Logs e arquivos temporarios
+*.log
+/logs/
+/tmp/
+/temp/
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# Dumps de memoria e erros da JVM
+*.hprof
+hs_err_pid*
+replay_pid*
+
+# Bancos H2 locais
+*.mv.db
+*.trace.db
+
+# Chaves e repositorios locais de certificados
+*.key
+*.jks
+*.keystore
+*.p12
+*.pfx
+
+# Eclipse / Spring Tool Suite
 .apt_generated
 .classpath
 .factorypath
@@ -16,21 +54,25 @@ target/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
+# IntelliJ IDEA
 .idea
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+# VS Code (configuracoes locais deste backend)
 .vscode/
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Manter versionados: .mvn/wrapper/, mvnw, mvnw.cmd, schema.sql,
+# application.properties e exemplos de configuracao sem credenciais.
