@@ -24,7 +24,10 @@ cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-O backend usa PostgreSQL via `compose.yaml` e cria as tabelas iniciais com `schema.sql`.
+O backend usa PostgreSQL externo, com Docker Compose automatico desativado.
+Configure `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD`
+no ambiente ou na IDE antes de iniciar. Veja os exemplos em [backend/README.md](backend/README.md).
+As tabelas iniciais continuam sendo criadas com `schema.sql`.
 
 ## Login com Active Directory
 
