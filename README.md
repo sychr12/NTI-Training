@@ -37,12 +37,27 @@ o bind no AD; ela nao e salva no banco, na sessao ou no frontend.
 Configure as variaveis de ambiente antes de subir o backend:
 
 ```powershell
-$env:NTI_AD_URL="ldaps://ad.seudominio.local:636"
-$env:NTI_AD_BASE_DN="DC=seudominio,DC=local"
-$env:NTI_AD_SERVICE_USER_DN="CN=usuario-servico,OU=Servicos,DC=seudominio,DC=local"
-$env:NTI_AD_SERVICE_PASSWORD="senha-do-usuario-servico"
-$env:NTI_AD_REQUIRED_GROUP_DN="CN=GG_NTI_TRAINING_USUARIOS,OU=Grupos,DC=seudominio,DC=local"
+$env:NTI_AD_URL="ldap://10.46.1.2:389"
+$env:NTI_AD_DOMAIN="idam.am.gov.br"
+$env:NTI_AD_BASE_DN="DC=idam,DC=am,DC=gov,DC=br"
+$env:NTI_AD_ALLOWED_GROUPS="GTI,GTI_ESTAGIARIO"
+$env:NTI_AD_ALLOW_INSECURE_LDAP="true"
 ```
+
+O uso de LDAP na porta 389 e temporario e transmite credenciais sem a protecao do TLS.
+Mantenha `NTI_AD_ALLOW_INSECURE_LDAP=false` fora do ambiente local e migre para
+`ldaps://THOR.idam.am.gov.br:636` quando o LDAPS estiver corretamente configurado.
+
+Para desenvolvimento local, o script abaixo solicita a senha do PostgreSQL sem grava-la em arquivo e
+inicia o backend com as demais variaveis preenchidas:
+
+```powershell
+cd backend
+.\run-local.ps1
+```
+
+Na tela de login, informe o usuario da rede e a senha pessoal do Windows/AD. A aplicacao faz
+o bind com `usuario@idam.am.gov.br` e usa a mesma conexao autenticada para consultar atributos e grupos.
 
 Opcionalmente:
 

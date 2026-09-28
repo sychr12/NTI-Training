@@ -11,6 +11,7 @@ import javax.naming.AuthenticationException;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.PartialResultException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
@@ -20,6 +21,8 @@ import javax.naming.directory.SearchResult;
 
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 import com.tiaprende.backend.login.exception.ActiveDirectoryUnavailableException;
@@ -29,6 +32,7 @@ import com.tiaprende.backend.login.exception.UnauthorizedGroupException;
 
 @Component
 public class ActiveDirectoryClient {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ActiveDirectoryClient.class);
 
 	private static final String[] RETURNING_ATTRIBUTES = {
 			"distinguishedName", "sAMAccountName", "displayName", "mail", "objectGUID", "memberOf"
@@ -46,58 +50,74 @@ public class ActiveDirectoryClient {
 		}
 
 		AuthProperties.ActiveDirectory ad = requireAdConfig();
+		DirContext context = null;
 		try {
-			SearchResult userResult = findUser(ad, username);
-			String userDn = attributeAsString(userResult.getAttributes(), "distinguishedName");
-
-			if (!StringUtils.hasText(userDn)) {
-				userDn = userResult.getNameInNamespace();
-			}
-
-			bind(ad.url(), userDn, password).close();
-
+			context = bind(ad.url(), userPrincipal(ad.domain(), username), password);
+			SearchResult userResult = findUser(ad, context, username);
 			AdUser user = mapUser(userResult.getAttributes(), username);
-			ensureAuthorized(ad.requiredGroupDn(), user.memberOf());
+			ensureAuthorized(ad.allowedGroups(), user.memberOf());
 			return user;
 		}
 		catch (AuthenticationException ex) {
 			throw new InvalidCredentialsException();
 		}
 		catch (NamingException ex) {
+			LOGGER.warn("Falha LDAP ao autenticar ou consultar o Active Directory: {}: {}",
+					ex.getClass().getSimpleName(), ex.getMessage());
 			throw new ActiveDirectoryUnavailableException(ex);
+		}
+		finally {
+			if (context != null) {
+				try {
+					context.close();
+				}
+				catch (NamingException ignored) {
+					// The authentication result has already been determined.
+				}
+			}
 		}
 	}
 
-	private SearchResult findUser(AuthProperties.ActiveDirectory ad, String username) throws NamingException {
-		DirContext context;
-        try {
-            context = bind(ad.url(), ad.serviceUserDn(), ad.servicePassword());
-        } catch (AuthenticationException exception) {
-            throw new AuthConfigurationException("Credenciais do usuario de servico do AD invalidas.");
-        }
-		try {
-			SearchControls controls = new SearchControls();
-			controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-			controls.setReturningAttributes(RETURNING_ATTRIBUTES);
+	private SearchResult findUser(AuthProperties.ActiveDirectory ad, DirContext context, String username)
+			throws NamingException {
+		SearchControls controls = new SearchControls();
+		controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+		controls.setReturningAttributes(RETURNING_ATTRIBUTES);
 
-			String filter = ad.userSearchFilter().replace("{0}", escapeLdapFilter(username));
-			NamingEnumeration<SearchResult> results = context.search(ad.baseDn(), filter, controls);
-            try {
-                if (!results.hasMore()) {
-                    throw new InvalidCredentialsException();
-                }
-                SearchResult result = results.next();
-                if (results.hasMore()) {
-                    throw new AuthConfigurationException("A busca no AD retornou mais de um usuario.");
-                }
-                return result;
-            } finally {
-                results.close();
-            }
+		String accountName = username.contains("@") ? username.substring(0, username.indexOf('@')) : username;
+		String filter = ad.userSearchFilter().replace("{0}", escapeLdapFilter(accountName));
+		NamingEnumeration<SearchResult> results = context.search(ad.baseDn(), filter, controls);
+		SearchResult result = null;
+		try {
+			try {
+				if (results.hasMore()) {
+					result = results.next();
+				}
+				if (result != null && results.hasMore()) {
+					throw new AuthConfigurationException("A busca no AD retornou mais de um usuario.");
+				}
+			}
+			catch (PartialResultException ex) {
+				if (result == null) {
+					throw ex;
+				}
+				LOGGER.debug("Referral parcial ignorado apos localizar o usuario no AD.");
+			}
+			if (result == null) {
+				throw new InvalidCredentialsException();
+			}
+			return result;
 		}
 		finally {
-			context.close();
+			results.close();
 		}
+	}
+
+	static String userPrincipal(String domain, String username) {
+		String normalized = username.trim();
+		return normalized.contains("@") || normalized.indexOf(92) >= 0
+				? normalized
+				: normalized + "@" + domain;
 	}
 
 	private DirContext bind(String url, String principal, String credentials) throws NamingException {
@@ -105,6 +125,7 @@ public class ActiveDirectoryClient {
 		environment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
 		environment.put(Context.PROVIDER_URL, url);
 		environment.put(Context.SECURITY_AUTHENTICATION, "simple");
+		environment.put(Context.REFERRAL, "ignore");
 		environment.put("com.sun.jndi.ldap.connect.timeout", "5000");
 		environment.put("com.sun.jndi.ldap.read.timeout", "5000");
 		environment.put(Context.SECURITY_PRINCIPAL, principal);
@@ -126,29 +147,46 @@ public class ActiveDirectoryClient {
 		return new AdUser(objectGuid, login, displayName, email, groups);
 	}
 
-	private void ensureAuthorized(String requiredGroupDn, List<String> userGroups) {
-		if (!StringUtils.hasText(requiredGroupDn)) {
-			throw new AuthConfigurationException("Configure NTI_AD_REQUIRED_GROUP_DN para restringir o acesso.");
+	private void ensureAuthorized(List<String> allowedGroups, List<String> userGroups) {
+		if (allowedGroups == null || allowedGroups.isEmpty()) {
+			throw new AuthConfigurationException("Configure NTI_AD_ALLOWED_GROUPS para restringir o acesso.");
 		}
 
 		boolean belongsToRequiredGroup = userGroups.stream()
-				.anyMatch(group -> group.equalsIgnoreCase(requiredGroupDn));
+				.anyMatch(group -> allowedGroups.stream()
+						.anyMatch(allowedGroup -> matchesAllowedGroup(allowedGroup, group)));
 
 		if (!belongsToRequiredGroup) {
 			throw new UnauthorizedGroupException();
 		}
 	}
 
+	static boolean matchesAllowedGroup(String allowedGroup, String userGroupDn) {
+		if (!StringUtils.hasText(allowedGroup) || !StringUtils.hasText(userGroupDn)) {
+			return false;
+		}
+		String normalized = allowedGroup.trim();
+		if (normalized.regionMatches(true, 0, "CN=", 0, 3)) {
+			return userGroupDn.equalsIgnoreCase(normalized);
+		}
+		String expectedPrefix = "CN=" + normalized + ",";
+		return userGroupDn.regionMatches(true, 0, expectedPrefix, 0, expectedPrefix.length());
+	}
+
 	private AuthProperties.ActiveDirectory requireAdConfig() {
 		AuthProperties.ActiveDirectory ad = properties.ad();
 		if (ad == null
 				|| !StringUtils.hasText(ad.url())
+				|| !StringUtils.hasText(ad.domain())
 				|| !StringUtils.hasText(ad.baseDn())
-				|| !StringUtils.hasText(ad.serviceUserDn())
-				|| !StringUtils.hasText(ad.servicePassword())
 				|| !StringUtils.hasText(ad.userSearchFilter())
-                || !StringUtils.hasText(ad.requiredGroupDn())) {
+				|| ad.allowedGroups() == null
+				|| ad.allowedGroups().isEmpty()) {
 			throw new AuthConfigurationException("Configuracao do Active Directory incompleta.");
+		}
+		if (ad.url().toLowerCase(java.util.Locale.ROOT).startsWith("ldap://") && !ad.allowInsecureLdap()) {
+			throw new AuthConfigurationException(
+					"LDAP sem criptografia bloqueado. Configure NTI_AD_ALLOW_INSECURE_LDAP=true apenas temporariamente.");
 		}
 		return ad;
 	}

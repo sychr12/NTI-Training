@@ -28,9 +28,9 @@ public record AuthProperties(
             "",
             "",
             "",
-            "",
-            "(sAMAccountName={0})",
-            ""
+            "(&(objectCategory=person)(objectClass=user)(sAMAccountName={0}))",
+            List.of(),
+            false
         );
     }
     }
@@ -59,23 +59,26 @@ public record AuthProperties(
 
     public record ActiveDirectory(
         String url,
+        String domain,
         String baseDn,
-        String serviceUserDn,
-        String servicePassword,
         String userSearchFilter,
-        String requiredGroupDn
+        List<String> allowedGroups,
+        boolean allowInsecureLdap
     ) {
         public ActiveDirectory{
             url = url == null ? "" : url;
+            domain = domain == null ? "" : domain;
             baseDn = baseDn == null ? "" : baseDn;
 
-            serviceUserDn = serviceUserDn == null ? "" : serviceUserDn;
-
-            servicePassword = servicePassword == null ? "" : servicePassword;
-
-            userSearchFilter = userSearchFilter == null || userSearchFilter.isBlank() ? "(sAMAccountName={0})" : userSearchFilter;
-
-            requiredGroupDn = requiredGroupDn == null ? "": requiredGroupDn;
+            userSearchFilter = userSearchFilter == null || userSearchFilter.isBlank()
+                    ? "(&(objectCategory=person)(objectClass=user)(sAMAccountName={0}))"
+                    : userSearchFilter;
+            allowedGroups = allowedGroups == null
+                    ? List.of()
+                    : allowedGroups.stream()
+                            .filter(group -> group != null && !group.isBlank())
+                            .map(String::trim)
+                            .toList();
         }
     }
 }

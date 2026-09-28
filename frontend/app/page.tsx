@@ -81,7 +81,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        setError(data?.detail ?? data?.message ?? "Login ou senha inválidos.");
+        setError(data?.mensagem ?? data?.detail ?? data?.message ?? "Login ou senha inválidos.");
         return;
       }
 
