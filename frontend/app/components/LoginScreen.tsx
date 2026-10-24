@@ -11,6 +11,7 @@ const loginErrors: Record<number, string> = {
   0: "Não foi possível conectar ao servidor de autenticação.",
   401: "Usuário ou senha inválidos. Confira os dados e tente novamente.",
   403: "Seu usuário não tem permissão para acessar o NTI Training.",
+  500: "O servidor encontrou um erro ao entrar. Tente novamente em instantes ou avise o NTI.",
   503: "O serviço de autenticação está indisponível. Tente novamente em instantes.",
 };
 
