@@ -1,16 +1,16 @@
 "use client";
 
-import Image from "next/image";
 import {
-  ArrowRight, Bell, BookA, BookOpenText, Bookmark, Building2,
+  ArrowBigUp, ArrowRight, Bell, BookA, BookOpenText, Bookmark, Building2,
   ChartNoAxesColumnIncreasing, CheckCircle2, ChevronDown, ChevronRight,
-  ChevronUp, ClipboardCheck, Clock3, Code2, Eye, EyeOff, FolderOpen,
-  GraduationCap, House, KeyRound, Lightbulb, Link2, LockKeyhole, LogOut,
+  ChevronUp, CircleAlert, ClipboardCheck, Clock3, Code2, Eye, EyeOff, FolderOpen,
+  GraduationCap, House, Info, KeyRound, LifeBuoy, Lightbulb, Link2, LockKeyhole, LogOut,
   Mail, Menu, Monitor, Moon, Network, PlayCircle, RefreshCw, Route, Save,
-  Search, Settings, ShieldCheck, Star, Timer, Trophy, UserRound, Wifi, Wrench,
+  Search, Settings, ShieldCheck, Star, Sun, Timer, Trophy, UserRound, Wifi, Wrench,
   X, type LucideIcon,
 } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { LearningShowcase } from "./components/LearningShowcase";
 
 type View = "inicio" | "tutoriais" | "tutorial" | "trilhas" | "exercicios" |
   "dicas" | "glossario" | "progresso" | "favoritos" | "configuracoes";
@@ -56,10 +56,32 @@ function Brand({ compact = false }: { compact?: boolean }) {
   </div>;
 }
 
+const loginErrors: Record<number, string> = {
+  401: "Usuário ou senha inválidos. Confira os dados e tente novamente.",
+  403: "Seu usuário não tem permissão para acessar o NTI Training.",
+  503: "O serviço de autenticação está indisponível. Tente novamente em instantes.",
+};
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Bom dia";
+  if (hour < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [errorCount, setErrorCount] = useState(0);
+  const [capsLock, setCapsLock] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [hello] = useState(greeting);
+
+  function fail(message: string) {
+    setError(message);
+    setErrorCount((value) => value + 1);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -81,44 +103,66 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        setError(data?.mensagem ?? data?.detail ?? data?.message ?? "Login ou senha inválidos.");
+        fail(loginErrors[response.status] ?? data?.mensagem ?? "Não foi possível entrar agora. Tente novamente.");
         return;
       }
 
       onLogin();
     }
     catch {
-      setError("Não foi possível conectar ao servidor de autenticação.");
+      fail("Não foi possível conectar ao servidor de autenticação.");
     }
     finally {
       setLoading(false);
     }
   }
-  return <main className="login-page"><section className="login-shell">
-    <div className="login-panel">
+
+  return <main className="login-page">
+    <section className="login-panel">
       <Brand />
       <div className="login-content">
-      <div className="login-copy"><span className="eyebrow">Portal de aprendizagem</span><h1>Acesse sua conta</h1><p>Entre com seu usuário da rede para continuar.</p></div>
-      <form className="login-form" onSubmit={handleSubmit}>
-        <label htmlFor="username">Usuário</label>
-        <div className="input-wrap"><UserRound size={17} /><input id="username" name="username" placeholder="Digite seu usuário" autoComplete="username" required /></div>
-        <label htmlFor="password">Senha</label>
-        <div className="input-wrap"><LockKeyhole size={17} /><input id="password" name="password" type={showPassword ? "text" : "password"} placeholder="Digite sua senha" autoComplete="current-password" required /><button className="icon-button input-action" type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"} title={showPassword ? "Ocultar senha" : "Mostrar senha"}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>
-        <div className="remember-row">
-          <label className="remember-check" htmlFor="remember">
-            <input id="remember" name="remember" type="checkbox" />
-            <span>Lembrar de mim</span>
-          </label>
-        </div>
-        {error && <p className="login-error" role="alert">{error}</p>}
-        <button className="primary-button login-button" type="submit" disabled={loading}>{loading ? "Entrando..." : "Entrar"}{!loading && <ArrowRight size={17} />}</button>
-      </form>
+        <span className="login-greeting"><span className="wave" aria-hidden="true">👋</span>{hello}! Que bom te ver.</span>
+        <h1>Continue sua <em>jornada</em> de aprendizado</h1>
+        <p className="login-lead">Entre com seu usuário e senha da rede para acessar tutoriais, trilhas e exercícios.</p>
+
+        <form className="login-form" onSubmit={handleSubmit}>
+          <div className="field">
+            <label htmlFor="username">Usuário</label>
+            <div className="input-wrap"><UserRound size={18} /><input id="username" name="username" placeholder="ex.: nome.sobrenome" autoComplete="username" autoCapitalize="none" spellCheck={false} required /></div>
+          </div>
+          <div className="field">
+            <label htmlFor="password">Senha</label>
+            <div className="input-wrap">
+              <LockKeyhole size={18} />
+              <input id="password" name="password" type={showPassword ? "text" : "password"} placeholder="Digite sua senha" autoComplete="current-password" required
+                onKeyUp={(event) => setCapsLock(event.getModifierState("CapsLock"))} onBlur={() => setCapsLock(false)} />
+              <button className="icon-button input-action" type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"} title={showPassword ? "Ocultar senha" : "Mostrar senha"}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+            </div>
+            {capsLock && <p className="caps-warning"><ArrowBigUp size={15} />Caps Lock está ativado</p>}
+          </div>
+
+          <div className="login-options">
+            <label className="remember-check" htmlFor="remember">
+              <input id="remember" name="remember" type="checkbox" />
+              <span>Lembrar de mim</span>
+            </label>
+            <button className="link-button" type="button" onClick={() => setShowHelp((value) => !value)} aria-expanded={showHelp}>Esqueci minha senha</button>
+          </div>
+          {showHelp && <p className="login-note"><Info size={17} /><span>Sua senha é a mesma usada para entrar no computador da rede. Para redefini-la, procure o suporte do NTI.</span></p>}
+
+          {error && <p key={errorCount} className="login-error" role="alert"><CircleAlert size={17} /><span>{error}</span></p>}
+
+          <button className="login-button" type="submit" disabled={loading}>
+            {loading ? <><span className="spinner" aria-hidden="true" />Entrando...</> : <>Entrar<ArrowRight className="login-arrow" size={18} /></>}
+          </button>
+        </form>
+
+        <p className="login-secure"><ShieldCheck size={15} />Acesso seguro com a sua conta da rede</p>
       </div>
-    </div>
-    <div className="login-art">
-      <Image className="login-image" src="/login-hero.png" alt="Dois estudantes usando notebooks para aprender tecnologia" width={1536} height={1024} priority />
-    </div>
-  </section></main>;
+      <footer className="login-footer">© {new Date().getFullYear()} NTI Training · Portal interno de aprendizagem</footer>
+    </section>
+    <LearningShowcase />
+  </main>;
 }
 
 function Sidebar({ current, onNavigate, open, onClose, onLogout }: { current: View; onNavigate: (view: View) => void; open: boolean; onClose: () => void; onLogout: () => void }) {
@@ -130,12 +174,12 @@ function Sidebar({ current, onNavigate, open, onClose, onLogout }: { current: Vi
   </aside></>;
 }
 
-function Topbar({ onMenu, onSearch, onProfile }: { onMenu: () => void; onSearch: (value: string) => void; onProfile: () => void }) {
+function Topbar({ onMenu, onSearch, onProfile, dark, onToggleTheme }: { onMenu: () => void; onSearch: (value: string) => void; onProfile: () => void; dark: boolean; onToggleTheme: () => void }) {
   const [query, setQuery] = useState("");
   return <header className="topbar">
     <button className="icon-button menu-button" onClick={onMenu} aria-label="Abrir menu" title="Abrir menu"><Menu size={21} /></button>
     <form className="top-search" onSubmit={(event) => { event.preventDefault(); onSearch(query); }}><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar conteúdos..." aria-label="Buscar conteúdos" /></form>
-    <div className="topbar-actions"><button className="icon-button notification-button" aria-label="Notificações" title="Notificações"><Bell size={19} /><span /></button><button className="profile-button" onClick={onProfile}><span className="avatar">LF</span><span><strong>Luiz Felipe</strong><small>Estagiário de TI</small></span><ChevronDown size={15} /></button></div>
+    <div className="topbar-actions"><button className="icon-button" onClick={onToggleTheme} aria-label={dark ? "Ativar modo claro" : "Ativar modo escuro"} title={dark ? "Ativar modo claro" : "Ativar modo escuro"}>{dark ? <Sun size={19} /> : <Moon size={19} />}</button><button className="icon-button notification-button" aria-label="Notificações" title="Notificações"><Bell size={19} /><span /></button><button className="profile-button" onClick={onProfile}><span className="avatar">LF</span><span><strong>Luiz Felipe</strong><small>Estagiário de TI</small></span><ChevronDown size={15} /></button></div>
   </header>;
 }
 
@@ -217,11 +261,49 @@ function FavoritesPage({ onOpen }: { onOpen: () => void }) {
   return <div className="page-stack"><PageHeading title="Meus favoritos" description="Conteúdos que você salvou para acessar depois." /><div className="tutorial-list">{tutorials.slice(1, 5).map((tutorial) => { const Icon = tutorial.icon; return <article className="tutorial-row" key={tutorial.title}><button className="tutorial-main" onClick={onOpen}><IconBadge icon={Icon} color={tutorial.color} soft={tutorial.soft} /><span><strong>{tutorial.title}</strong><small>{tutorial.category}<i />{tutorial.level}<i /><Clock3 size={13} />{tutorial.time}</small></span></button><button className="icon-button favorite-active" aria-label="Remover dos favoritos" title="Remover dos favoritos"><Bookmark size={18} fill="currentColor" /></button><ChevronRight size={18} /></article>; })}</div></div>;
 }
 
-function SettingsPage() {
-  const [preferences, setPreferences] = useState({ reminders: true, email: true, dark: false });
+function SettingsPage({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: () => void }) {
+  const [preferences, setPreferences] = useState({ reminders: true, email: true });
+  const [passwordHelp, setPasswordHelp] = useState(false);
   return <div className="page-stack"><PageHeading title="Meu perfil" description="Gerencie suas informações e preferências." /><div className="settings-grid"><section className="profile-panel"><h2>Informações</h2><div className="profile-summary"><span className="avatar avatar-large">LF</span><div><strong>Luiz Felipe</strong><small>Estagiário de TI</small></div></div><div className="profile-info"><p><Mail size={16} /><span><small>E-mail</small>luiz.felipe@empresa.com</span></p><p><Building2 size={16} /><span><small>Área</small>Tecnologia da Informação</span></p><p><KeyRound size={16} /><span><small>Nível</small>Estagiário</span></p></div></section>
-    <section className="preferences-panel"><h2>Preferências</h2>{[["reminders", "Lembretes de estudo", Bell], ["email", "Notificações por e-mail", Mail], ["dark", "Modo escuro", Moon]].map(([key, label, Icon]) => { const PreferenceIcon = Icon as LucideIcon; const preferenceKey = key as keyof typeof preferences; return <div className="preference-row" key={key as string}><span><PreferenceIcon size={17} />{label as string}</span><button className={`switch ${preferences[preferenceKey] ? "on" : ""}`} onClick={() => setPreferences((value) => ({ ...value, [preferenceKey]: !value[preferenceKey] }))} aria-label={`Alternar ${label}`}><i /></button></div>; })}<div className="password-box"><div><LockKeyhole size={18} /><span><strong>Senha de acesso</strong><small>Gerenciada pela rede interna</small></span></div><button className="secondary-button">Solicitar alteração</button></div></section>
-  </div></div>;
+    <section className="preferences-panel"><h2>Preferências</h2>{[["reminders", "Lembretes de estudo", Bell], ["email", "Notificações por e-mail", Mail], ["dark", "Modo escuro", Moon]].map(([key, label, Icon]) => { const PreferenceIcon = Icon as LucideIcon; const isTheme = key === "dark"; const preferenceKey = key as keyof typeof preferences; const on = isTheme ? dark : preferences[preferenceKey]; return <div className="preference-row" key={key as string}><span><PreferenceIcon size={17} />{label as string}</span><button className={`switch ${on ? "on" : ""}`} onClick={() => isTheme ? onToggleTheme() : setPreferences((value) => ({ ...value, [preferenceKey]: !value[preferenceKey] }))} role="switch" aria-checked={on} aria-label={`Alternar ${label}`}><i /></button></div>; })}<div className="password-box"><div><LockKeyhole size={18} /><span><strong>Senha de acesso</strong><small>Gerenciada pela rede interna</small></span></div><button className="secondary-button" onClick={() => setPasswordHelp(true)}>Solicitar alteração</button></div></section>
+  </div>{passwordHelp && <PasswordHelpDialog onClose={() => setPasswordHelp(false)} />}</div>;
+}
+
+function PasswordHelpDialog({ onClose }: { onClose: () => void }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => { ref.current?.showModal(); }, []);
+  const close = () => ref.current?.close();
+  return <dialog ref={ref} className="modal" aria-labelledby="password-help-title" onClose={onClose} onClick={(event) => { if (event.target === event.currentTarget) close(); }}>
+    <div className="modal-body">
+      <button className="icon-button modal-close" onClick={close} aria-label="Fechar" title="Fechar"><X size={18} /></button>
+      <span className="modal-icon"><LifeBuoy size={24} /></span>
+      <h2 id="password-help-title">Alteração de senha</h2>
+      <p>Sua senha de acesso é a mesma da rede da empresa, por isso ela não pode ser alterada aqui no NTI Training. Para alterá-la, abra um chamado para o NTI:</p>
+      <ol className="modal-steps">
+        <li>Abra um chamado para o NTI solicitando a alteração da senha de rede.</li>
+        <li>Informe seu usuário de rede e um contato para retorno.</li>
+        <li>Aguarde a equipe do NTI entrar em contato com as orientações.</li>
+      </ol>
+      <p className="modal-tip"><ShieldCheck size={16} /><span>Nunca compartilhe sua senha, nem mesmo com a equipe do NTI.</span></p>
+      <div className="modal-actions"><button className="primary-button" onClick={close}>Entendi</button></div>
+    </div>
+  </dialog>;
+}
+
+const THEME_KEY = "nti-theme";
+type Theme = "light" | "dark";
+
+// O tema inicial vem do atributo que o script do layout já aplicou no <html>.
+function useTheme() {
+  const [theme, setTheme] = useState<Theme>(() => typeof document !== "undefined" && document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+
+  // useLayoutEffect reaplica antes da pintura (inclusive após o remount do Strict Mode em dev).
+  useLayoutEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try { localStorage.setItem(THEME_KEY, theme); } catch { /* armazenamento indisponível */ }
+  }, [theme]);
+
+  return [theme, () => setTheme((value) => (value === "dark" ? "light" : "dark"))] as const;
 }
 
 export default function Home() {
@@ -230,6 +312,7 @@ export default function Home() {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [search, setSearch] = useState("");
   const [authChecked, setAuthChecked] = useState(false);
+  const [theme, toggleTheme] = useTheme();
 
   useEffect(() => {
     let active = true;
@@ -261,7 +344,7 @@ export default function Home() {
       });
   }
 
-  if (!authChecked) return <main className="login-page"><section className="login-shell login-checking"><Brand /></section></main>;
+  if (!authChecked) return <main className="auth-checking"><Brand /></main>;
   if (!loggedIn) return <LoginScreen onLogin={() => setLoggedIn(true)} />;
   const openTutorial = () => setView("tutorial");
   let content: React.ReactNode;
@@ -274,8 +357,8 @@ export default function Home() {
     case "glossario": content = <GlossaryPage />; break;
     case "progresso": content = <ProgressPage />; break;
     case "favoritos": content = <FavoritesPage onOpen={openTutorial} />; break;
-    case "configuracoes": content = <SettingsPage />; break;
+    case "configuracoes": content = <SettingsPage dark={theme === "dark"} onToggleTheme={toggleTheme} />; break;
     default: content = <Dashboard onNavigate={setView} onTutorial={openTutorial} />;
   }
-  return <div className="app-shell"><Sidebar current={view} onNavigate={setView} open={mobileMenu} onClose={() => setMobileMenu(false)} onLogout={handleLogout} /><div className="app-main"><Topbar onMenu={() => setMobileMenu(true)} onSearch={(value) => { setSearch(value); setView("tutoriais"); }} onProfile={() => setView("configuracoes")} /><main className="page-content">{content}</main></div></div>;
+  return <div className="app-shell"><Sidebar current={view} onNavigate={setView} open={mobileMenu} onClose={() => setMobileMenu(false)} onLogout={handleLogout} /><div className="app-main"><Topbar onMenu={() => setMobileMenu(true)} onSearch={(value) => { setSearch(value); setView("tutoriais"); }} onProfile={() => setView("configuracoes")} dark={theme === "dark"} onToggleTheme={toggleTheme} /><main className="page-content">{content}</main></div></div>;
 }
