@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
+import com.tiaprende.backend.exercicio.dto.ExercicioGabaritoResponse;
 import com.tiaprende.backend.exercicio.dto.ExercicioRequest;
 import com.tiaprende.backend.exercicio.dto.ExercicioResponse;
 import com.tiaprende.backend.exercicio.dto.RespostaExercicioRequest;
@@ -41,6 +42,17 @@ public class ExercicioService {
                 .findByTutorial(tutorialId)
                 .stream()
                 .map(ExercicioResponse::from)
+                .toList();
+    }
+
+    public List<ExercicioGabaritoResponse> listarComGabarito(
+            Long tutorialId
+    ) {
+
+        return exercicioRepository
+                .findByTutorial(tutorialId)
+                .stream()
+                .map(ExercicioGabaritoResponse::from)
                 .toList();
     }
 

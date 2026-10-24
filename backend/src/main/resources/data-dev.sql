@@ -2,6 +2,13 @@
 -- Cada insercao confere se o registro ja existe, entao o script pode rodar a cada inicializacao.
 -- Evite ponto e virgula dentro dos textos: o Spring separa os comandos por ele.
 
+-- Usuario local "dev" (DevAuthenticator) com perfil ADMIN, para acessar a area de gerenciamento.
+-- O GUID e o mesmo usado pelo DevAuthenticator.
+INSERT INTO usuarios (ad_object_guid, login, nome, email, perfil)
+SELECT '00000000-0000-0000-0000-00000000de00', 'dev', 'Dev Local', 'dev@localhost', 'ADMIN'
+WHERE NOT EXISTS (SELECT 1 FROM usuarios WHERE ad_object_guid = '00000000-0000-0000-0000-00000000de00');
+UPDATE usuarios SET perfil = 'ADMIN' WHERE ad_object_guid = '00000000-0000-0000-0000-00000000de00';
+
 -- Tutoriais
 INSERT INTO tutoriais (titulo, descricao, conteudo, categoria, nivel)
 SELECT 'Como ligar e desligar o computador corretamente',

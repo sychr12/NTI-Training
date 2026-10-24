@@ -77,6 +77,17 @@ class ApiIntegrationTests {
     }
 
     @Test
+    void answerKeyIsOnlyVisibleToContentEditors() throws Exception {
+        jdbc.sql("INSERT INTO exercicios (id, tutorial_id, pergunta, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, explicacao) VALUES (9001, 9001, 'Pergunta', 'A', 'B', 'C', 'D', 'C', 'Porque sim')").update();
+        mvc.perform(get("/api/exercicios/gabarito?tutorialId=9001").session(session("ALUNO"))).andExpect(status().isForbidden());
+        mvc.perform(get("/api/exercicios?tutorialId=9001").session(session("ALUNO"))).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].respostaCorreta").doesNotExist());
+        mvc.perform(get("/api/exercicios/gabarito?tutorialId=9001").session(session("PROFESSOR"))).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].respostaCorreta").value("C"))
+                .andExpect(jsonPath("$[0].explicacao").value("Porque sim"));
+    }
+
+    @Test
     void userAdministrationRequiresAdminAndRefreshesRole() throws Exception {
         var session = session("ADMIN");
         mvc.perform(get("/api/users").session(session)).andExpect(status().isOk());

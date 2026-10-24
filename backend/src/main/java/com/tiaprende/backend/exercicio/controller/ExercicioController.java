@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.tiaprende.backend.exercicio.dto.ExercicioGabaritoResponse;
 import com.tiaprende.backend.exercicio.dto.ExercicioRequest;
 import com.tiaprende.backend.exercicio.dto.ExercicioResponse;
 import com.tiaprende.backend.exercicio.dto.RespostaExercicioRequest;
@@ -31,6 +32,19 @@ public class ExercicioController {
 
         return exercicioService
                 .listarPorTutorial(tutorialId);
+    }
+
+    /*
+     * GET /api/exercicios/gabarito?tutorialId=1
+     * Inclui a resposta correta; restrito a quem edita conteudo (ver SecurityConfig).
+     */
+    @GetMapping("/gabarito")
+    public List<ExercicioGabaritoResponse> listarComGabarito(
+            @RequestParam Long tutorialId
+    ) {
+
+        return exercicioService
+                .listarComGabarito(tutorialId);
     }
 
     @GetMapping("/{id}")
