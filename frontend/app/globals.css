@@ -518,7 +518,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(11, 111, 251
 .detail-body { padding: 18px 20px 22px; }
 .lesson-content { display: flex; flex-direction: column; gap: 14px; color: var(--text-2); font-size: 13px; line-height: 1.7; }
 .lesson-content p { margin: 0; }
-.lesson-content ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.lesson-content ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; list-style: disc; }
+.lesson-content ul li::marker { color: var(--blue); }
 .lesson-content .step-item strong { color: var(--ink); font-size: 12px; }
 .lesson-content .step-item p { font-size: 11px; }
 .learning-card p > span { display: flex; flex-direction: column; gap: 2px; color: var(--ink); font-size: 11px; }
@@ -565,6 +566,62 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(11, 111, 251
   .quiz-options { grid-template-columns: 1fr; }
   .trail-steps { padding-left: 16px; }
   .detail-body { padding: 14px; }
+}
+
+/* Área de gerenciamento */
+.admin-tabs { flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.admin-tabs a { min-height: 32px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 6px; color: var(--muted); font-size: 11px; font-weight: 700; }
+.admin-tabs a:hover { color: var(--blue); background: var(--hover); }
+.admin-tabs a.active { color: #fff; background: var(--blue); }
+.admin-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.admin-toolbar .local-search { flex: 1; min-width: 200px; }
+.admin-toolbar .primary-button { min-height: 39px; }
+.admin-select { height: 39px; max-width: 100%; padding: 0 10px; color: var(--ink); border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface); font: inherit; font-size: 12px; }
+.admin-toolbar .admin-select { flex: 1 1 260px; }
+.admin-note { margin: 0; color: var(--muted); font-size: 11px; }
+.admin-list { display: flex; flex-direction: column; gap: 8px; }
+.admin-list article { min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+.admin-list article.inactive { opacity: .6; }
+.admin-list article > span:nth-child(2) { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.admin-list strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.admin-list small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 10px; }
+.admin-list .admin-select { width: 150px; height: 34px; }
+.admin-list .icon-badge { width: 38px; height: 38px; }
+.icon-button.danger:hover { color: var(--danger); background: var(--danger-soft); }
+.icon-button:disabled { opacity: .4; cursor: default; }
+.confirm-delete { display: inline-flex; align-items: center; gap: 8px; color: var(--danger); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.danger-button { min-height: 30px; padding: 0 12px; color: #fff; border: 0; border-radius: 6px; background: var(--danger); font-size: 11px; font-weight: 700; cursor: pointer; }
+.danger-button:disabled { opacity: .6; cursor: wait; }
+
+.modal.modal-wide { width: min(640px, calc(100% - 32px)); max-height: calc(100vh - 48px); }
+.admin-form { display: flex; flex-direction: column; gap: 14px; }
+.admin-form h2 { margin: 0 0 4px; }
+.form-field { min-width: 0; margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 6px; }
+.form-field > label, .form-field legend, .form-field-head > label { color: var(--ink); font-size: 12px; font-weight: 700; }
+.form-field > label span, .form-field legend span, .form-field-head label span { color: var(--danger); }
+.form-field input, .form-field textarea, .form-field select { width: 100%; padding: 9px 11px; color: var(--ink); border: 1.5px solid var(--line-strong); border-radius: 9px; background: var(--surface-2); font: inherit; font-size: 13px; line-height: 1.5; transition: border-color .15s, box-shadow .15s; }
+.form-field textarea { resize: vertical; }
+.form-field input:focus, .form-field textarea:focus, .form-field select:focus { outline: 0; border-color: var(--blue); background: var(--surface); box-shadow: 0 0 0 3px rgba(11, 111, 251, .12); }
+.form-hint { color: var(--muted); font-size: 11px; line-height: 1.45; }
+.form-field-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.form-field-head .link-button { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+.lesson-preview { max-height: 360px; overflow: auto; padding: 14px; border: 1.5px dashed var(--line-strong); border-radius: 9px; }
+.lesson-preview > p { margin: 0; color: var(--muted); font-size: 12px; }
+.form-choice > div { display: flex; gap: 8px; }
+.form-choice label { width: 44px; height: 40px; display: grid; place-items: center; border: 1.5px solid var(--line-strong); border-radius: 9px; font-weight: 800; cursor: pointer; }
+.form-choice label.active { color: #fff; border-color: var(--success); background: var(--success); }
+.form-choice input { position: absolute; opacity: 0; pointer-events: none; }
+.form-choice label:has(input:focus-visible) { outline: 3px solid rgba(11, 111, 251, .25); }
+.order-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.order-list li { display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+.order-list li > span { width: 22px; height: 22px; display: grid; place-items: center; flex: 0 0 auto; color: var(--blue); background: var(--blue-soft); border-radius: 50%; font-size: 10px; font-weight: 800; }
+.order-list li > strong { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.order-list .icon-button { width: 30px; height: 30px; }
+
+@media (max-width: 680px) {
+  .admin-list article { flex-wrap: wrap; }
+  .admin-list article > span:nth-child(2) { flex-basis: calc(100% - 60px); }
+  .admin-list .admin-select { flex: 1; }
 }
 
 /* Popup (dialog nativo) */

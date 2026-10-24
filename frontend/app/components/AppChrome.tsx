@@ -2,14 +2,15 @@
 
 import {
   BookA, BookOpenText, ChartNoAxesColumnIncreasing, ChevronDown, ClipboardCheck, House, Lightbulb, LogOut,
-  Menu, Moon, Route, Search, Settings, Star, Sun, Trophy, X, type LucideIcon,
+  Menu, Moon, PencilRuler, Route, Search, Settings, Star, Sun, Trophy, X, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PROGRESS_CHANGED_EVENT, useApi } from "../lib/api";
-import { initials, roleLabel } from "../lib/catalog";
+import { canManageContent, initials, roleLabel } from "../lib/catalog";
 import type { Perfil, SessionUser } from "../lib/types";
+import { useAuth } from "./auth";
 import { useTheme } from "./theme";
 import { Brand, ProgressTrack } from "./ui";
 
@@ -29,8 +30,12 @@ function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
+const manageItem = { href: "/gerenciar", label: "Gerenciar", icon: PencilRuler };
+
 export function Sidebar({ open, onClose, onLogout }: { open: boolean; onClose: () => void; onLogout: () => void }) {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const items = canManageContent(user?.perfil) ? [...navItems, manageItem] : navItems;
   const perfil = useApi<Perfil>("/api/perfil");
   const { reload } = perfil;
 
@@ -44,7 +49,7 @@ export function Sidebar({ open, onClose, onLogout }: { open: boolean; onClose: (
 
   return <>{open && <button className="sidebar-backdrop" aria-label="Fechar menu" onClick={onClose} />}<aside className={`sidebar ${open ? "sidebar-open" : ""}`}>
     <div className="sidebar-brand-row"><Brand compact /><button className="icon-button mobile-only" onClick={onClose} aria-label="Fechar menu" title="Fechar menu"><X size={20} /></button></div>
-    <nav className="sidebar-nav" aria-label="Navegação principal">{navItems.map((item) => {
+    <nav className="sidebar-nav" aria-label="Navegação principal">{items.map((item) => {
       const Icon = item.icon;
       const active = isActive(pathname, item.href);
       return <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined} onClick={onClose}><Icon size={17} /><span>{item.label}</span></Link>;

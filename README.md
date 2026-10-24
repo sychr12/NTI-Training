@@ -93,3 +93,11 @@ Cada tela tem sua propria rota e busca os dados na API do backend:
 `/login`, `/` (inicio), `/tutoriais`, `/tutoriais/[id]`, `/trilhas`, `/exercicios`, `/dicas`,
 `/glossario`, `/progresso`, `/favoritos` e `/configuracoes`. Sem sessao, o app redireciona para `/login`.
 Os favoritos ficam salvos no navegador, pois o backend ainda nao tem API para eles.
+
+## Gerenciar conteudo
+
+Usuarios com perfil PROFESSOR, SUPERVISOR ou ADMIN veem o item **Gerenciar** no menu (`/gerenciar`), onde
+cadastram, editam e excluem tutoriais, trilhas (com a ordem dos tutoriais), exercicios (com gabarito),
+dicas e termos do glossario. Somente ADMIN acessa `/gerenciar/usuarios` para mudar o perfil de acesso
+ou desativar contas. Os perfis sao definidos no banco; o primeiro administrador precisa ser configurado
+por um operador. No perfil `dev`, o usuario `dev` ja e ADMIN.

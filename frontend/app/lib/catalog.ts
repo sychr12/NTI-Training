@@ -37,6 +37,19 @@ export function roleLabel(perfil: string | null | undefined) {
   return (perfil && roleLabels[perfil]) ?? "Aluno";
 }
 
+export const ROLES = Object.keys(roleLabels);
+
+/** Mesmas regras do SecurityConfig do backend: quem pode criar/editar conteúdo. */
+export function canManageContent(perfil: string | null | undefined) {
+  return perfil === "PROFESSOR" || perfil === "SUPERVISOR" || perfil === "ADMIN";
+}
+
+export function isAdmin(perfil: string | null | undefined) {
+  return perfil === "ADMIN";
+}
+
+export const LEVELS = ["Iniciante", "Intermediário", "Avançado"];
+
 /** Tempo estimado de leitura, a partir do conteúdo do tutorial (~180 palavras por minuto). */
 export function readingTime(conteudo: string) {
   const words = conteudo.trim().split(/\s+/).length;
