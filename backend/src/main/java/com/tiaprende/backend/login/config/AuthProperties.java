@@ -8,7 +8,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record AuthProperties(
     Cors cors,
     Session session,
-    ActiveDirectory ad
+    ActiveDirectory ad,
+    Login login
 ) {
 
     public AuthProperties{
@@ -30,8 +31,13 @@ public record AuthProperties(
             "",
             "(&(objectCategory=person)(objectClass=user)(sAMAccountName={0}))",
             List.of(),
-            false
+            false,
+            0,
+            0
         );
+    }
+    if (login == null){
+        login = new Login(0, 0);
     }
     }
     public record Cors (List<String> allowedOrigins){
@@ -63,7 +69,9 @@ public record AuthProperties(
         String baseDn,
         String userSearchFilter,
         List<String> allowedGroups,
-        boolean allowInsecureLdap
+        boolean allowInsecureLdap,
+        int connectTimeoutMillis,
+        int readTimeoutMillis
     ) {
         public ActiveDirectory{
             url = url == null ? "" : url;
@@ -79,6 +87,29 @@ public record AuthProperties(
                             .filter(group -> group != null && !group.isBlank())
                             .map(String::trim)
                             .toList();
+            if (connectTimeoutMillis <= 0){
+                connectTimeoutMillis = 5000;
+            }
+            if (readTimeoutMillis <= 0){
+                readTimeoutMillis = 5000;
+            }
+        }
+    }
+
+    /**
+     * Limite de tentativas de login com senha errada, para evitar que alguém bloqueie contas no AD.
+     */
+    public record Login(
+        int maxAttempts,
+        int blockMinutes
+    ) {
+        public Login{
+            if (maxAttempts <= 0){
+                maxAttempts = 5;
+            }
+            if (blockMinutes <= 0){
+                blockMinutes = 15;
+            }
         }
     }
 }

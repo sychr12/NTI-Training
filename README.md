@@ -64,6 +64,23 @@ Opcionalmente:
 ```powershell
 $env:NTI_CORS_ALLOWED_ORIGINS="http://localhost:3000"
 $env:NTI_SESSION_COOKIE_SECURE="false"
+$env:NTI_LOGIN_MAX_ATTEMPTS="5"            # senhas erradas antes de bloquear o usuario
+$env:NTI_LOGIN_BLOCK_MINUTES="15"          # duracao do bloqueio
+$env:NTI_AD_CONNECT_TIMEOUT_MILLIS="5000"
+$env:NTI_AD_READ_TIMEOUT_MILLIS="5000"
 ```
 
 Em producao, use `NTI_SESSION_COOKIE_SECURE=true` com HTTPS.
+
+## Login local para desenvolvimento (sem AD)
+
+Fora da rede do AD, suba o backend com o perfil `dev`. Ele troca o login do AD por um usuario local
+e sobe o PostgreSQL pelo `backend/compose.yaml` (precisa do Docker Desktop aberto):
+
+```powershell
+cd backend
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
+```
+
+Usuario `dev`, senha `dev123` (altere com `NTI_DEV_USERNAME` e `NTI_DEV_PASSWORD`).
+Nunca use o perfil `dev` em producao.

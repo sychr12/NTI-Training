@@ -19,6 +19,7 @@ import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.slf4j.Logger;
@@ -31,7 +32,8 @@ import com.tiaprende.backend.login.exception.InvalidCredentialsException;
 import com.tiaprende.backend.login.exception.UnauthorizedGroupException;
 
 @Component
-public class ActiveDirectoryClient {
+@Profile("!dev")
+public class ActiveDirectoryClient implements DirectoryAuthenticator {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ActiveDirectoryClient.class);
 
 	private static final String[] RETURNING_ATTRIBUTES = {
@@ -44,6 +46,7 @@ public class ActiveDirectoryClient {
 		this.properties = properties;
 	}
 
+	@Override
 	public AdUser authenticate(String username, String password) {
 		if (!StringUtils.hasText(username) || !StringUtils.hasText(password)) {
 			throw new InvalidCredentialsException();
@@ -52,7 +55,7 @@ public class ActiveDirectoryClient {
 		AuthProperties.ActiveDirectory ad = requireAdConfig();
 		DirContext context = null;
 		try {
-			context = bind(ad.url(), userPrincipal(ad.domain(), username), password);
+			context = bind(ad, userPrincipal(ad.domain(), username), password);
 			SearchResult userResult = findUser(ad, context, username);
 			AdUser user = mapUser(userResult.getAttributes(), username);
 			ensureAuthorized(ad.allowedGroups(), user.memberOf());
@@ -120,14 +123,16 @@ public class ActiveDirectoryClient {
 				: normalized + "@" + domain;
 	}
 
-	private DirContext bind(String url, String principal, String credentials) throws NamingException {
+	private DirContext bind(AuthProperties.ActiveDirectory ad, String principal, String credentials) throws NamingException {
 		Hashtable<String, String> environment = new Hashtable<>();
 		environment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-		environment.put(Context.PROVIDER_URL, url);
+		environment.put(Context.PROVIDER_URL, ad.url());
 		environment.put(Context.SECURITY_AUTHENTICATION, "simple");
 		environment.put(Context.REFERRAL, "ignore");
-		environment.put("com.sun.jndi.ldap.connect.timeout", "5000");
-		environment.put("com.sun.jndi.ldap.read.timeout", "5000");
+		// Sem isto o JNDI devolve o objectGUID como texto e corrompe os bytes do identificador.
+		environment.put("java.naming.ldap.attributes.binary", "objectGUID");
+		environment.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(ad.connectTimeoutMillis()));
+		environment.put("com.sun.jndi.ldap.read.timeout", String.valueOf(ad.readTimeoutMillis()));
 		environment.put(Context.SECURITY_PRINCIPAL, principal);
 		environment.put(Context.SECURITY_CREDENTIALS, credentials);
 		return new InitialDirContext(environment);
@@ -233,7 +238,7 @@ public class ActiveDirectoryClient {
 		return value == null ? null : value.toString();
 	}
 
-	private String objectGuidToUuid(byte[] bytes) {
+	static String objectGuidToUuid(byte[] bytes) {
 		if (bytes.length != 16) {
 			throw new AuthConfigurationException("objectGUID retornado pelo AD tem formato invalido.");
 		}

@@ -14,6 +14,7 @@ import com.tiaprende.backend.login.dto.LoginRequest;
 import com.tiaprende.backend.login.exception.ActiveDirectoryUnavailableException;
 import com.tiaprende.backend.login.exception.AuthConfigurationException;
 import com.tiaprende.backend.login.exception.InvalidCredentialsException;
+import com.tiaprende.backend.login.exception.TooManyAttemptsException;
 import com.tiaprende.backend.login.exception.UnauthorizedGroupException;
 import com.tiaprende.backend.login.service.AuthService;
 import com.tiaprende.backend.login.session.AuthSession;
@@ -35,14 +36,19 @@ public class AuthController {
 	@PostMapping("/login")
 	public AuthResponse login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
 		try {
-			AppUser user = authService.login(loginRequest.usuario(), loginRequest.senha());
+			AppUser user = authService.login(loginRequest.usuario(), loginRequest.senha(), request.getRemoteAddr());
 			HttpSession oldSession = request.getSession(false);
 			if (oldSession != null) {
 				oldSession.invalidate();
 			}
 
+			boolean remember = Boolean.TRUE.equals(loginRequest.lembrar());
 			HttpSession session = request.getSession(true);
-			session.setMaxInactiveInterval(sessionTimeout(Boolean.TRUE.equals(loginRequest.lembrar())));
+			session.setMaxInactiveInterval(sessionTimeout(remember));
+			if (remember) {
+				// Faz o cookie de sessão sobreviver ao fechamento do navegador (ver AuthSession.REMEMBER_ME).
+				request.setAttribute(AuthSession.REMEMBER_ME, Boolean.TRUE);
+			}
 
 			SessionUser sessionUser = new SessionUser(
 					user.id(),
@@ -59,6 +65,9 @@ public class AuthController {
 		}
 		catch (UnauthorizedGroupException ex) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, ex.getMessage());
+		}
+		catch (TooManyAttemptsException ex) {
+			throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
 		}
 		catch (AuthConfigurationException | ActiveDirectoryUnavailableException ex) {
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());

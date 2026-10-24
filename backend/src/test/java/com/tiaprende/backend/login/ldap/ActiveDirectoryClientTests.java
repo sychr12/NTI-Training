@@ -1,5 +1,6 @@
 package com.tiaprende.backend.login.ldap;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,6 +28,13 @@ class ActiveDirectoryClientTests {
         assertTrue(ActiveDirectoryClient.matchesAllowedGroup(
                 "CN=GTI,OU=GRUPOS,OU=GTI,OU=IDAM,DC=idam,DC=am,DC=gov,DC=br",
                 "cn=gti,ou=grupos,ou=gti,ou=idam,dc=idam,dc=am,dc=gov,dc=br"));
+    }
+
+    @Test
+    void convertsTheBinaryObjectGuidToUuid() {
+        // O AD grava os tres primeiros blocos do GUID em little-endian.
+        byte[] bytes = java.util.HexFormat.of().parseHex("33221100554477668899aabbccddeeff");
+        assertEquals("00112233-4455-6677-8899-aabbccddeeff", ActiveDirectoryClient.objectGuidToUuid(bytes));
     }
 
     @Test
