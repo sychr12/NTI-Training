@@ -83,4 +83,13 @@ cd backend
 ```
 
 Usuario `dev`, senha `dev123` (altere com `NTI_DEV_USERNAME` e `NTI_DEV_PASSWORD`).
+O perfil tambem carrega conteudo de exemplo (tutoriais, trilhas, dicas, glossario e exercicios) a partir de
+`backend/src/main/resources/data-dev.sql`, sem duplicar registros a cada inicializacao.
 Nunca use o perfil `dev` em producao.
+
+## Telas do frontend
+
+Cada tela tem sua propria rota e busca os dados na API do backend:
+`/login`, `/` (inicio), `/tutoriais`, `/tutoriais/[id]`, `/trilhas`, `/exercicios`, `/dicas`,
+`/glossario`, `/progresso`, `/favoritos` e `/configuracoes`. Sem sessao, o app redireciona para `/login`.
+Os favoritos ficam salvos no navegador, pois o backend ainda nao tem API para eles.

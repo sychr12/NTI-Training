@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { Providers } from "./components/providers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -8,7 +9,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "NTI Training",
+  title: { default: "NTI Training", template: "%s · NTI Training" },
   description: "Portal interno de aprendizagem e desenvolvimento em tecnologia.",
 };
 
@@ -21,7 +22,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body>{children}</body>
+      <body><Providers>{children}</Providers></body>
     </html>
   );
 }
