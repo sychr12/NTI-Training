@@ -7,6 +7,7 @@ import com.tiaprende.backend.progresso.model.ProgressoTutorial;
 public record ProgressoTutorialResponse(
         Long tutorialId,
         String status,
+        int percentual,
         Instant iniciadoEm,
         Instant concluidoEm,
         Instant atualizadoEm
@@ -19,6 +20,7 @@ public record ProgressoTutorialResponse(
         return new ProgressoTutorialResponse(
                 progresso.tutorialId(),
                 progresso.status(),
+                progresso.percentual(),
                 progresso.iniciadoEm(),
                 progresso.concluidoEm(),
                 progresso.atualizadoEm()

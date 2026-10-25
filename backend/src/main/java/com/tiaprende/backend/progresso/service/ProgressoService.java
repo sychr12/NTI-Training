@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
+import com.tiaprende.backend.conquista.repository.DiaEstudoRepository;
 import com.tiaprende.backend.progresso.dto.AtualizarProgressoRequest;
 import com.tiaprende.backend.progresso.dto.ProgressoTrilhaResponse;
 import com.tiaprende.backend.progresso.dto.ProgressoTutorialResponse;
@@ -25,13 +26,17 @@ public class ProgressoService {
 
     private final ProgressoRepository progressoRepository;
 
+    private final DiaEstudoRepository diaEstudoRepository;
+
     public ProgressoService(
             ProgressoRepository progressoRepository,
-            TutorialRepository tutorialRepository
+            TutorialRepository tutorialRepository,
+            DiaEstudoRepository diaEstudoRepository
     ) {
         this.tutorialRepository = tutorialRepository;
         this.progressoRepository =
                 progressoRepository;
+        this.diaEstudoRepository = diaEstudoRepository;
     }
 
     public List<ProgressoTutorialResponse> listar(
@@ -67,12 +72,20 @@ public class ProgressoService {
                         .trim()
                         .toUpperCase(java.util.Locale.ROOT);
 
+        // Progresso parcial vale so em andamento (0-99); concluir sempre grava 100.
+        Integer percentual = request.percentual() == null
+                ? null
+                : Math.max(0, Math.min(99, request.percentual()));
+
         ProgressoTutorial progresso =
                 progressoRepository.saveOrUpdate(
                         usuarioId,
                         request.tutorialId(),
-                        status
+                        status,
+                        percentual
                 );
+
+        diaEstudoRepository.registrarHoje(usuarioId);
 
         return ProgressoTutorialResponse.from(
                 progresso

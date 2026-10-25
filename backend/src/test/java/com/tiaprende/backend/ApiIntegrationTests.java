@@ -107,6 +107,35 @@ class ApiIntegrationTests {
     }
 
     @Test
+    void achievementsComputeXpStreakAndNewMedals() throws Exception {
+        jdbc.sql("INSERT INTO progresso_tutoriais (usuario_id, tutorial_id, status, percentual) VALUES (9001, 9001, 'CONCLUIDO', 100)").update();
+        jdbc.sql("INSERT INTO exercicios (id, tutorial_id, pergunta, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta) VALUES (9001, 9001, 'P', 'A', 'B', 'C', 'D', 'A')").update();
+        jdbc.sql("INSERT INTO respostas_exercicios (usuario_id, exercicio_id, resposta, correto) VALUES (9001, 9001, 'A', TRUE)").update();
+        // Datas relativas a data do banco, para funcionar no H2 e no PostgreSQL.
+        var hoje = jdbc.sql("SELECT CURRENT_DATE").query(java.time.LocalDate.class).single();
+        jdbc.sql("INSERT INTO dias_estudo (usuario_id, dia) VALUES (9001, :ontem), (9001, :anteontem)")
+                .param("ontem", hoje.minusDays(1)).param("anteontem", hoje.minusDays(2)).update();
+        var session = session("ALUNO");
+
+        // 1 tutorial (50 XP) + 1 acerto (10 XP); estudou hoje, ontem e anteontem
+        mvc.perform(get("/api/conquistas").session(session)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.xp").value(60))
+                .andExpect(jsonPath("$.nivel.nome").value("Iniciante"))
+                .andExpect(jsonPath("$.nivel.xpProximo").value(100))
+                .andExpect(jsonPath("$.sequencia.atual").value(3))
+                .andExpect(jsonPath("$.sequencia.estudouHoje").value(true))
+                .andExpect(jsonPath("$.medalhas[?(@.codigo=='primeiro-passo')].conquistada").value(true))
+                .andExpect(jsonPath("$.medalhas[?(@.codigo=='primeiro-passo')].nova").value(true))
+                .andExpect(jsonPath("$.medalhas[?(@.codigo=='constante')].conquistada").value(true))
+                .andExpect(jsonPath("$.medalhas[?(@.codigo=='dedicado')].conquistada").value(false))
+                .andExpect(jsonPath("$.medalhas[?(@.codigo=='dedicado')].progresso").value(1));
+
+        mvc.perform(post("/api/conquistas/vistas").session(session)).andExpect(status().isNoContent());
+        mvc.perform(get("/api/conquistas").session(session))
+                .andExpect(jsonPath("$.medalhas[?(@.codigo=='primeiro-passo')].nova").value(false));
+    }
+
+    @Test
     void answerKeyIsOnlyVisibleToContentEditors() throws Exception {
         jdbc.sql("INSERT INTO exercicios (id, tutorial_id, pergunta, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, explicacao) VALUES (9001, 9001, 'Pergunta', 'A', 'B', 'C', 'D', 'C', 'Porque sim')").update();
         mvc.perform(get("/api/exercicios/gabarito?tutorialId=9001").session(session("ALUNO"))).andExpect(status().isForbidden());

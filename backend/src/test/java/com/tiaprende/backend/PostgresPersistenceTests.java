@@ -41,6 +41,7 @@ class PostgresPersistenceTests {
     @Autowired ExercicioService exerciseService;
     @Autowired ProgressoRepository progress;
     @Autowired HomeService home;
+    @Autowired org.springframework.jdbc.core.simple.JdbcClient jdbc;
 
     TutorialRequest tutorial(String title) {
         return new TutorialRequest(title, "Descricao", "Conteudo", "Redes", "Basico");
@@ -112,6 +113,18 @@ class PostgresPersistenceTests {
     }
 
     @Test
+    void partialProgressNeverDecreasesAndCompletionIsHundred() {
+        var user = users.upsertFromAd(new AdUser("partial-guid", "login", "Nome", null, List.of()));
+        var tutorial = tutorials.save(tutorial("Parcial"));
+        assertEquals(40, progress.saveOrUpdate(user.id(), tutorial.id(), "EM_ANDAMENTO", 40).percentual());
+        assertEquals(40, progress.saveOrUpdate(user.id(), tutorial.id(), "EM_ANDAMENTO", 10).percentual());
+        assertEquals(40, progress.saveOrUpdate(user.id(), tutorial.id(), "EM_ANDAMENTO").percentual());
+        assertEquals(100, progress.saveOrUpdate(user.id(), tutorial.id(), "CONCLUIDO", 50).percentual());
+        // Reabrir um tutorial concluido volta para 99%, sem perder o que ja foi lido.
+        assertEquals(99, progress.saveOrUpdate(user.id(), tutorial.id(), "EM_ANDAMENTO").percentual());
+    }
+
+    @Test
     void exerciseAnswerIsNormalizedAndSavedPerUser() {
         var user = users.upsertFromAd(new AdUser("exercise-guid", "login", "Nome", null, List.of()));
         var tutorial = tutorials.save(tutorial("Exercicio"));
@@ -120,6 +133,9 @@ class PostgresPersistenceTests {
         assertEquals("A", exercise.respostaCorreta());
         assertTrue(exerciseService.responder(user.id(), exercise.id(), new RespostaExercicioRequest(" a ")).correto());
         exerciseService.responder(user.id(), exercise.id(), new RespostaExercicioRequest("A"));
+        // Responder conta como dia de estudo (uma vez por dia).
+        assertEquals(1, jdbc.sql("SELECT COUNT(*) FROM dias_estudo WHERE usuario_id = :id AND dia = CURRENT_DATE")
+                .param("id", user.id()).query(Integer.class).single());
         var session = new SessionUser(user.id(), user.login(), user.nome(), user.email(), user.perfil());
         assertEquals(1, home.carregarHome(session).estatisticas().exerciciosConcluidos());
         exercises.update(exercise.id(), request).orElseThrow();

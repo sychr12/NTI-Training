@@ -31,6 +31,7 @@ public class ProgressoRepository {
                     usuario_id,
                     tutorial_id,
                     status,
+                    percentual,
                     iniciado_em,
                     concluido_em,
                     atualizado_em
@@ -54,6 +55,7 @@ public class ProgressoRepository {
                     usuario_id,
                     tutorial_id,
                     status,
+                    percentual,
                     iniciado_em,
                     concluido_em,
                     atualizado_em
@@ -72,11 +74,25 @@ public class ProgressoRepository {
             Long tutorialId,
             String status) {
 
+        return saveOrUpdate(usuarioId, tutorialId, status, null);
+    }
+
+    /*
+     * percentual: progresso parcial enviado pelo frontend (0-99) ou null para manter o atual.
+     * CONCLUIDO sempre vira 100; EM_ANDAMENTO fica entre 0 e 99 e nunca diminui.
+     */
+    public ProgressoTutorial saveOrUpdate(
+            Long usuarioId,
+            Long tutorialId,
+            String status,
+            Integer percentual) {
+
         return jdbcClient.sql("""
                 INSERT INTO progresso_tutoriais (
                     usuario_id,
                     tutorial_id,
                     status,
+                    percentual,
                     iniciado_em,
                     concluido_em,
                     atualizado_em
@@ -85,6 +101,11 @@ public class ProgressoRepository {
                     :usuarioId,
                     :tutorialId,
                     :status,
+                    CASE
+                        WHEN :status = 'CONCLUIDO'
+                        THEN 100
+                        ELSE COALESCE(CAST(:percentual AS INTEGER), 0)
+                    END,
                     CURRENT_TIMESTAMP,
                     CASE
                         WHEN :status = 'CONCLUIDO'
@@ -99,6 +120,16 @@ public class ProgressoRepository {
                 DO UPDATE SET
 
                     status = EXCLUDED.status,
+
+                    percentual =
+                        CASE
+                            WHEN EXCLUDED.status = 'CONCLUIDO'
+                            THEN 100
+                            ELSE GREATEST(
+                                LEAST(progresso_tutoriais.percentual, 99),
+                                COALESCE(CAST(:percentual AS INTEGER), 0)
+                            )
+                        END,
 
                     iniciado_em =
                         COALESCE(
@@ -123,6 +154,7 @@ public class ProgressoRepository {
                     usuario_id,
                     tutorial_id,
                     status,
+                    percentual,
                     iniciado_em,
                     concluido_em,
                     atualizado_em
@@ -130,6 +162,7 @@ public class ProgressoRepository {
                 .param("usuarioId", usuarioId)
                 .param("tutorialId", tutorialId)
                 .param("status", status)
+                .param("percentual", percentual)
                 .query(this::mapProgresso)
                 .single();
     }
@@ -206,6 +239,7 @@ public class ProgressoRepository {
                 resultSet.getLong("usuario_id"),
                 resultSet.getLong("tutorial_id"),
                 resultSet.getString("status"),
+                resultSet.getInt("percentual"),
 
                 iniciadoEm == null
                         ? null

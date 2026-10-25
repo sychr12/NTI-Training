@@ -28,14 +28,14 @@ public class HomeService {
                 WHERE r.usuario_id = :usuarioId AND r.correto = TRUE
                 """).param("usuarioId", usuario.id()).query(Integer.class).single();
         var continuar = jdbcClient.sql("""
-                SELECT t.id, t.titulo, t.descricao
+                SELECT t.id, t.titulo, t.descricao, p.percentual
                 FROM progresso_tutoriais p
                 JOIN tutoriais t ON t.id = p.tutorial_id AND t.ativo = TRUE
                 WHERE p.usuario_id = :usuarioId AND p.status = 'EM_ANDAMENTO'
                 ORDER BY p.atualizado_em DESC, t.id
                 """).param("usuarioId", usuario.id())
                 .query((rs, row) -> new ContinueLearningResponse(rs.getLong("id"),
-                        rs.getString("titulo"), rs.getString("descricao"), 0, "TUTORIAL"))
+                        rs.getString("titulo"), rs.getString("descricao"), rs.getInt("percentual"), "TUTORIAL"))
                 .list();
         return new HomeResponse(usuario.nome(), new HomeStatsResponse(iniciados - concluidos,
                 concluidos, exercicios, progressoRepository.calcularProgressoGeral(usuario.id())), continuar);

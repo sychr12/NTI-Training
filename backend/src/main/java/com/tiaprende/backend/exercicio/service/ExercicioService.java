@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
+import com.tiaprende.backend.conquista.repository.DiaEstudoRepository;
 import com.tiaprende.backend.exercicio.dto.ExercicioGabaritoResponse;
 import com.tiaprende.backend.exercicio.dto.ExercicioRequest;
 import com.tiaprende.backend.exercicio.dto.ExercicioResponse;
@@ -25,13 +26,17 @@ public class ExercicioService {
 
     private final ExercicioRepository exercicioRepository;
 
+    private final DiaEstudoRepository diaEstudoRepository;
+
     public ExercicioService(
             ExercicioRepository exercicioRepository,
-            TutorialRepository tutorialRepository
+            TutorialRepository tutorialRepository,
+            DiaEstudoRepository diaEstudoRepository
     ) {
         this.tutorialRepository = tutorialRepository;
         this.exercicioRepository =
                 exercicioRepository;
+        this.diaEstudoRepository = diaEstudoRepository;
     }
 
     public List<ExercicioResponse> listarPorTutorial(
@@ -134,6 +139,7 @@ public class ExercicioService {
                         .equalsIgnoreCase(resposta);
 
         exercicioRepository.salvarResposta(usuarioId, id, resposta, correto);
+        diaEstudoRepository.registrarHoje(usuarioId);
 
         return new ResultadoExercicioResponse(
                 correto,

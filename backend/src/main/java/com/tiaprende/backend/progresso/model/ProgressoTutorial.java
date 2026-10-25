@@ -7,6 +7,7 @@ public record ProgressoTutorial(
         Long usuarioId,
         Long tutorialId,
         String status,
+        int percentual,
         Instant iniciadoEm,
         Instant concluidoEm,
         Instant atualizadoEm

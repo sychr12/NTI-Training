@@ -108,3 +108,23 @@ CREATE TABLE IF NOT EXISTS preferencias_usuarios (
     notificacoes_email BOOLEAN NOT NULL DEFAULT TRUE,
     atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Progresso parcial do tutorial (0-99 em andamento, 100 concluido).
+ALTER TABLE progresso_tutoriais ADD COLUMN IF NOT EXISTS percentual INTEGER NOT NULL DEFAULT 0;
+UPDATE progresso_tutoriais SET percentual = 100 WHERE status = 'CONCLUIDO' AND percentual < 100;
+
+-- Dias em que o usuario estudou (concluiu/abriu tutorial ou respondeu exercicio), para a sequencia de estudos.
+CREATE TABLE IF NOT EXISTS dias_estudo (
+    usuario_id BIGINT NOT NULL REFERENCES usuarios(id),
+    dia DATE NOT NULL,
+    PRIMARY KEY (usuario_id, dia)
+);
+
+-- Medalhas ja conquistadas; "vista" controla o aviso de nova conquista no frontend.
+CREATE TABLE IF NOT EXISTS conquistas_usuarios (
+    usuario_id BIGINT NOT NULL REFERENCES usuarios(id),
+    codigo VARCHAR(40) NOT NULL,
+    conquistada_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    vista BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (usuario_id, codigo)
+);
