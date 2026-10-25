@@ -1,0 +1,10 @@
+node_modules
+.next
+.npm-cache
+.artifacts
+.env
+.env.*
+*.tsbuildinfo
+next-env.d.ts
+Dockerfile
+README.md

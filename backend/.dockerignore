@@ -1,0 +1,7 @@
+target
+.m2
+.env
+.env.*
+*.ps1
+compose.yaml
+README.md

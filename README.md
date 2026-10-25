@@ -2,6 +2,30 @@
 
 Portal de treinamento interno com frontend em Next.js e backend em Spring Boot.
 
+## Rodando tudo com Docker
+
+Com o Docker instalado, na pasta raiz do projeto:
+
+```powershell
+docker compose up --build
+```
+
+Isso sobe o PostgreSQL, o backend e o frontend de uma vez:
+
+- Site: `http://localhost:3000` (usuário `dev`, senha `dev123`)
+- API: `http://localhost:8080`
+
+Por padrão o backend usa o perfil `dev`: usuário local administrador e conteúdo de exemplo, sem precisar do AD.
+Para mudar portas, senha do banco ou entrar pelo Active Directory, copie `.env.example` para `.env` e ajuste.
+Depois de mudar `BACKEND_PORT`, rode com `--build` de novo, pois o endereço da API vai para o build do frontend.
+
+```powershell
+docker compose down        # para tudo e mantém os dados
+docker compose down -v     # para tudo e apaga o banco
+```
+
+Os passos abaixo são para rodar sem Docker, cada parte separada.
+
 ## Rodando o frontend
 
 ```powershell

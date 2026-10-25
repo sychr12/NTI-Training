@@ -1,0 +1,60 @@
+# Sobe o projeto inteiro: banco, backend e frontend.
+#   docker compose up --build
+# Site em http://localhost:3000 e API em http://localhost:8080.
+# Por padrão usa o perfil "dev" (usuário dev / dev123 e conteúdo de exemplo).
+# Para entrar pelo Active Directory, veja o .env.example.
+
+name: nti-training
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: nti_training
+      POSTGRES_USER: ${DB_USER:-nti}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-nti}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${NTI_PERFIL:-dev}
+      # O banco já vem deste compose; o Spring não deve tentar subir outro
+      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/nti_training
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-nti}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-nti}
+      NTI_CORS_ALLOWED_ORIGINS: http://localhost:${FRONTEND_PORT:-3000}
+      NTI_AD_URL: ${NTI_AD_URL:-ldap://10.46.1.2:389}
+      NTI_AD_DOMAIN: ${NTI_AD_DOMAIN:-idam.am.gov.br}
+      NTI_AD_BASE_DN: ${NTI_AD_BASE_DN:-DC=idam,DC=am,DC=gov,DC=br}
+      NTI_AD_ALLOWED_GROUPS: ${NTI_AD_ALLOWED_GROUPS:-GTI,GTI_ESTAGIARIO}
+      NTI_AD_ALLOW_INSECURE_LDAP: ${NTI_AD_ALLOW_INSECURE_LDAP:-false}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # O navegador chama a API pela porta publicada no computador
+        NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT:-8080}
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    restart: unless-stopped
+
+volumes:
+  db-data:
