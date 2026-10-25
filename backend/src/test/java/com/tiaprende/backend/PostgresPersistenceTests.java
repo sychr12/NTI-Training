@@ -42,6 +42,7 @@ class PostgresPersistenceTests {
     @Autowired ProgressoRepository progress;
     @Autowired HomeService home;
     @Autowired org.springframework.jdbc.core.simple.JdbcClient jdbc;
+    @Autowired com.tiaprende.backend.progresso.service.ProgressoService progressService;
 
     TutorialRequest tutorial(String title) {
         return new TutorialRequest(title, "Descricao", "Conteudo", "Redes", "Basico");
@@ -122,6 +123,20 @@ class PostgresPersistenceTests {
         assertEquals(100, progress.saveOrUpdate(user.id(), tutorial.id(), "CONCLUIDO", 50).percentual());
         // Reabrir um tutorial concluido volta para 99%, sem perder o que ja foi lido.
         assertEquals(99, progress.saveOrUpdate(user.id(), tutorial.id(), "EM_ANDAMENTO").percentual());
+    }
+
+    @Test
+    void tutorialCanBeCompletedOnlyAfterAnsweringItsExercises() {
+        var user = users.upsertFromAd(new AdUser("complete-guid", "login", "Nome", null, List.of()));
+        var tutorial = tutorials.save(tutorial("Concluir"));
+        var exercise = exercises.save(new ExercicioRequest(tutorial.id(), "Pergunta", "A", "B", "C", "D", "A", null));
+        var concluir = new com.tiaprende.backend.progresso.dto.AtualizarProgressoRequest(tutorial.id(), "CONCLUIDO", null);
+        org.junit.jupiter.api.Assertions.assertThrows(
+                com.tiaprende.backend.progresso.exception.ExerciciosPendentesException.class,
+                () -> progressService.atualizar(user.id(), concluir));
+        // Resposta errada tambem conta: o exigido e fazer o exercicio.
+        exerciseService.responder(user.id(), exercise.id(), new RespostaExercicioRequest("B"));
+        assertEquals("CONCLUIDO", progressService.atualizar(user.id(), concluir).status());
     }
 
     @Test

@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
 import com.tiaprende.backend.exercicio.dto.ExercicioRequest;
+import com.tiaprende.backend.exercicio.dto.MinhaRespostaResponse;
 import com.tiaprende.backend.exercicio.model.Exercicio;
 
 @Repository
@@ -225,6 +226,18 @@ public class ExercicioRepository {
                 .update();
 
         return rows > 0;
+    }
+
+    public List<MinhaRespostaResponse> findRespostas(Long usuarioId, Long tutorialId) {
+        return jdbcClient.sql("""
+                SELECT r.exercicio_id, r.resposta, r.correto, e.resposta_correta, e.explicacao
+                FROM respostas_exercicios r
+                JOIN exercicios e ON e.id = r.exercicio_id AND e.ativo = TRUE
+                WHERE r.usuario_id = :usuarioId AND e.tutorial_id = :tutorialId
+                """).param("usuarioId", usuarioId).param("tutorialId", tutorialId)
+                .query((rs, row) -> new MinhaRespostaResponse(rs.getLong("exercicio_id"), rs.getString("resposta"),
+                        rs.getBoolean("correto"), rs.getString("resposta_correta"), rs.getString("explicacao")))
+                .list();
     }
 
     public void salvarResposta(Long usuarioId, Long exercicioId, String resposta, boolean correto) {

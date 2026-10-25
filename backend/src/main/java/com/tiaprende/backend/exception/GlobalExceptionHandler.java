@@ -12,6 +12,7 @@ import com.tiaprende.backend.login.exception.ActiveDirectoryUnavailableException
 import com.tiaprende.backend.login.exception.AuthConfigurationException;
 import com.tiaprende.backend.login.exception.InvalidCredentialsException;
 import com.tiaprende.backend.login.exception.UnauthorizedGroupException;
+import com.tiaprende.backend.progresso.exception.ExerciciosPendentesException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -93,6 +94,17 @@ public class GlobalExceptionHandler {
 
         return buildResponse(
                 HttpStatus.SERVICE_UNAVAILABLE,
+                exception.getMessage(),
+                request);
+    }
+
+    @ExceptionHandler(ExerciciosPendentesException.class)
+    public ResponseEntity<ErrorResponse> handleExerciciosPendentes(
+            ExerciciosPendentesException exception,
+            HttpServletRequest request) {
+
+        return buildResponse(
+                HttpStatus.CONFLICT,
                 exception.getMessage(),
                 request);
     }

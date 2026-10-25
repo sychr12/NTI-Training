@@ -254,6 +254,29 @@ public class ProgressoRepository {
                         : atualizadoEm.toInstant());
     }
 
+    /*
+     * Exercicios ativos do tutorial que o usuario ainda nao respondeu (certo ou errado).
+     */
+    public int countExerciciosPendentes(
+            Long usuarioId,
+            Long tutorialId) {
+        return jdbcClient.sql("""
+                SELECT COUNT(*)
+                FROM exercicios e
+                WHERE e.tutorial_id = :tutorialId
+                  AND e.ativo = TRUE
+                  AND NOT EXISTS (
+                      SELECT 1 FROM respostas_exercicios r
+                      WHERE r.exercicio_id = e.id
+                        AND r.usuario_id = :usuarioId
+                  )
+                """)
+                .param("usuarioId", usuarioId)
+                .param("tutorialId", tutorialId)
+                .query(Integer.class)
+                .single();
+    }
+
     public int countTutoriaisIniciados(
             Long usuarioId) {
         return jdbcClient.sql("""

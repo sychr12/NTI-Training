@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.tiaprende.backend.conquista.repository.DiaEstudoRepository;
 import com.tiaprende.backend.progresso.dto.AtualizarProgressoRequest;
+import com.tiaprende.backend.progresso.exception.ExerciciosPendentesException;
 import com.tiaprende.backend.progresso.dto.ProgressoTrilhaResponse;
 import com.tiaprende.backend.progresso.dto.ProgressoTutorialResponse;
 import com.tiaprende.backend.progresso.model.ProgressoTutorial;
@@ -71,6 +72,14 @@ public class ProgressoService {
                 request.status()
                         .trim()
                         .toUpperCase(java.util.Locale.ROOT);
+
+        // So conclui quem respondeu todos os exercicios do tutorial.
+        if ("CONCLUIDO".equals(status)) {
+            int pendentes = progressoRepository.countExerciciosPendentes(usuarioId, request.tutorialId());
+            if (pendentes > 0) {
+                throw new ExerciciosPendentesException(pendentes);
+            }
+        }
 
         // Progresso parcial vale so em andamento (0-99); concluir sempre grava 100.
         Integer percentual = request.percentual() == null

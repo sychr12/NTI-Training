@@ -136,6 +136,25 @@ class ApiIntegrationTests {
     }
 
     @Test
+    void completingRequiresAnsweringEveryExercise() throws Exception {
+        jdbc.sql("INSERT INTO exercicios (id, tutorial_id, pergunta, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, explicacao) VALUES (9003, 9001, 'P', 'A', 'B', 'C', 'D', 'B', 'Porque B')").update();
+        var session = session("ALUNO");
+        mvc.perform(put("/api/progresso").session(session).contentType("application/json")
+                .content("{\"tutorialId\":9001,\"status\":\"CONCLUIDO\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.mensagem").value("Responda o exercicio deste tutorial antes de concluir."));
+        mvc.perform(get("/api/exercicios/minhas-respostas?tutorialId=9001").session(session))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+
+        jdbc.sql("INSERT INTO respostas_exercicios (usuario_id, exercicio_id, resposta, correto) VALUES (9001, 9003, 'A', FALSE)").update();
+        mvc.perform(get("/api/exercicios/minhas-respostas?tutorialId=9001").session(session))
+                .andExpect(jsonPath("$[0].exercicioId").value(9003))
+                .andExpect(jsonPath("$[0].resposta").value("A"))
+                .andExpect(jsonPath("$[0].correto").value(false))
+                .andExpect(jsonPath("$[0].respostaCorreta").value("B"));
+    }
+
+    @Test
     void answerKeyIsOnlyVisibleToContentEditors() throws Exception {
         jdbc.sql("INSERT INTO exercicios (id, tutorial_id, pergunta, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, explicacao) VALUES (9001, 9001, 'Pergunta', 'A', 'B', 'C', 'D', 'C', 'Porque sim')").update();
         mvc.perform(get("/api/exercicios/gabarito?tutorialId=9001").session(session("ALUNO"))).andExpect(status().isForbidden());
