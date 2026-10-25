@@ -5,12 +5,12 @@ import java.time.Instant;
 public record Tutorial(
     Long id,
     String titulo,
-    String descrisao,
+    String descricao,
     String conteudo,
     String categoria,
     String nivel,
     boolean ativo,
     Instant criadoEm,
-    Instant atulizadoEm
+    Instant atualizadoEm
 ) {
 }

@@ -6,14 +6,11 @@ import { Suspense, useMemo, useState } from "react";
 import { TutorialRow } from "../../components/content";
 import { EmptyState, ErrorState, LoadingState, PageHeading } from "../../components/ui";
 import { useApi } from "../../lib/api";
+import { normalizeText } from "../../lib/catalog";
 import { useProgress } from "../../lib/progress";
 import type { Tutorial } from "../../lib/types";
 
 const ALL = "Todas";
-
-function normalize(value: string) {
-  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-}
 
 export default function TutorialsPage() {
   return <div className="page-stack">
@@ -38,10 +35,10 @@ function TutorialList({ initialQuery, initialCategory }: { initialQuery: string;
 
   const categories = useMemo(() => [ALL, ...new Set((tutorials.data ?? []).map((tutorial) => tutorial.categoria ?? "Geral"))], [tutorials.data]);
   const filtered = useMemo(() => {
-    const term = normalize(query.trim());
+    const term = normalizeText(query.trim());
     return (tutorials.data ?? []).filter((tutorial) =>
       (category === ALL || (tutorial.categoria ?? "Geral") === category)
-      && (!term || normalize(`${tutorial.titulo} ${tutorial.descricao ?? ""}`).includes(term)));
+      && (!term || normalizeText(`${tutorial.titulo} ${tutorial.descricao ?? ""}`).includes(term)));
   }, [tutorials.data, query, category]);
 
   return <>

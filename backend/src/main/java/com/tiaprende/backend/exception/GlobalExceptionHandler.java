@@ -2,15 +2,25 @@ package com.tiaprende.backend.exception;
 
 import java.time.Instant;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.tiaprende.backend.login.exception.ActiveDirectoryUnavailableException;
 import com.tiaprende.backend.login.exception.AuthConfigurationException;
 import com.tiaprende.backend.login.exception.InvalidCredentialsException;
+import com.tiaprende.backend.login.exception.TooManyAttemptsException;
 import com.tiaprende.backend.login.exception.UnauthorizedGroupException;
 import com.tiaprende.backend.progresso.exception.ExerciciosPendentesException;
 
@@ -19,26 +29,26 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ErrorResponse> handleStatus(
-            org.springframework.web.server.ResponseStatusException exception,
+            ResponseStatusException exception,
             HttpServletRequest request) {
         return buildResponse(HttpStatus.valueOf(exception.getStatusCode().value()), exception.getReason(), request);
     }
 
-    @ExceptionHandler({org.springframework.http.converter.HttpMessageNotReadableException.class,
-            org.springframework.web.bind.MissingServletRequestParameterException.class,
-            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
+    @ExceptionHandler({HttpMessageNotReadableException.class,
+            MissingServletRequestParameterException.class,
+            MethodArgumentTypeMismatchException.class})
     public ResponseEntity<ErrorResponse> handleInvalidRequest(Exception exception, HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, "Requisicao invalida.", request);
     }
 
-    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleMethod(Exception exception, HttpServletRequest request) {
         return buildResponse(HttpStatus.METHOD_NOT_ALLOWED, "Metodo HTTP nao permitido.", request);
     }
 
-    @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleMediaType(Exception exception, HttpServletRequest request) {
         return buildResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Tipo de conteudo nao suportado.", request);
     }
@@ -98,6 +108,17 @@ public class GlobalExceptionHandler {
                 request);
     }
 
+    @ExceptionHandler(TooManyAttemptsException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyAttempts(
+            TooManyAttemptsException exception,
+            HttpServletRequest request) {
+
+        return buildResponse(
+                HttpStatus.TOO_MANY_REQUESTS,
+                exception.getMessage(),
+                request);
+    }
+
     @ExceptionHandler(ExerciciosPendentesException.class)
     public ResponseEntity<ErrorResponse> handleExerciciosPendentes(
             ExerciciosPendentesException exception,
@@ -125,7 +146,7 @@ public class GlobalExceptionHandler {
             Exception exception,
             HttpServletRequest request) {
 
-        org.slf4j.LoggerFactory.getLogger(getClass()).error("Erro ao processar {}", request.getRequestURI(), exception);
+        LoggerFactory.getLogger(getClass()).error("Erro ao processar {}", request.getRequestURI(), exception);
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Ocorreu um erro interno no servidor.",
@@ -133,8 +154,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({ResourceNotFoundException.class,
-            org.springframework.web.servlet.resource.NoResourceFoundException.class,
-            org.springframework.web.servlet.NoHandlerFoundException.class})
+            NoResourceFoundException.class,
+            NoHandlerFoundException.class})
     public ResponseEntity<ErrorResponse> handleResourceNotFound(
             Exception exception,
             HttpServletRequest request) {

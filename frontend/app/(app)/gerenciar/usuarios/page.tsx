@@ -5,13 +5,9 @@ import { useMemo, useState } from "react";
 import { useAuth } from "../../../components/auth";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { ApiError, apiFetch, useApi } from "../../../lib/api";
-import { initials, isAdmin, ROLES, roleLabel } from "../../../lib/catalog";
+import { initials, isAdmin, normalizeText, roleLabel, ROLES } from "../../../lib/catalog";
 import { relativeDate } from "../../../lib/progress";
 import type { Usuario } from "../../../lib/types";
-
-function normalize(value: string) {
-  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-}
 
 // Contas vêm do AD no primeiro login; aqui o administrador só ajusta perfil e acesso.
 export default function ManageUsersPage() {
@@ -22,8 +18,8 @@ export default function ManageUsersPage() {
   const [error, setError] = useState("");
 
   const filtered = useMemo(() => {
-    const term = normalize(query.trim());
-    return (users.data ?? []).filter((user) => !term || normalize(`${user.nome ?? ""} ${user.login} ${user.email ?? ""}`).includes(term));
+    const term = normalizeText(query.trim());
+    return (users.data ?? []).filter((user) => !term || normalizeText(`${user.nome ?? ""} ${user.login} ${user.email ?? ""}`).includes(term));
   }, [users.data, query]);
 
   if (!isAdmin(me?.perfil)) {

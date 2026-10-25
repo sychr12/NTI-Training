@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 /** Disparado quando a API responde 401 fora das rotas de login: a sessão expirou. */
 export const SESSION_EXPIRED_EVENT = "nti:session-expired";

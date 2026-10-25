@@ -4,7 +4,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -19,31 +18,6 @@ public class ProgressoRepository {
 
     public ProgressoRepository(JdbcClient jdbcClient) {
         this.jdbcClient = jdbcClient;
-    }
-
-    public Optional<ProgressoTutorial> findByUsuarioAndTutorial(
-            Long usuarioId,
-            Long tutorialId) {
-
-        return jdbcClient.sql("""
-                SELECT
-                    id,
-                    usuario_id,
-                    tutorial_id,
-                    status,
-                    percentual,
-                    iniciado_em,
-                    concluido_em,
-                    atualizado_em
-                FROM progresso_tutoriais
-                WHERE tutorial_id IN (SELECT id FROM tutoriais WHERE ativo = TRUE)
-                  AND usuario_id = :usuarioId
-                  AND tutorial_id = :tutorialId
-                """)
-                .param("usuarioId", usuarioId)
-                .param("tutorialId", tutorialId)
-                .query(this::mapProgresso)
-                .optional();
     }
 
     public List<ProgressoTutorial> findByUsuario(

@@ -11,11 +11,6 @@ import org.springframework.web.server.ResponseStatusException;
 import com.tiaprende.backend.login.config.AuthProperties;
 import com.tiaprende.backend.login.dto.AuthResponse;
 import com.tiaprende.backend.login.dto.LoginRequest;
-import com.tiaprende.backend.login.exception.ActiveDirectoryUnavailableException;
-import com.tiaprende.backend.login.exception.AuthConfigurationException;
-import com.tiaprende.backend.login.exception.InvalidCredentialsException;
-import com.tiaprende.backend.login.exception.TooManyAttemptsException;
-import com.tiaprende.backend.login.exception.UnauthorizedGroupException;
 import com.tiaprende.backend.login.service.AuthService;
 import com.tiaprende.backend.login.session.AuthSession;
 import com.tiaprende.backend.login.session.AuthSession.SessionUser;
@@ -35,43 +30,30 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public AuthResponse login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
-		try {
-			AppUser user = authService.login(loginRequest.usuario(), loginRequest.senha(), request.getRemoteAddr());
-			HttpSession oldSession = request.getSession(false);
-			if (oldSession != null) {
-				oldSession.invalidate();
-			}
+		// Erros de login (credenciais, grupo, tentativas, AD) viram status HTTP no GlobalExceptionHandler.
+		AppUser user = authService.login(loginRequest.usuario(), loginRequest.senha(), request.getRemoteAddr());
+		HttpSession oldSession = request.getSession(false);
+		if (oldSession != null) {
+			oldSession.invalidate();
+		}
 
-			boolean remember = Boolean.TRUE.equals(loginRequest.lembrar());
-			HttpSession session = request.getSession(true);
-			session.setMaxInactiveInterval(sessionTimeout(remember));
-			if (remember) {
-				// Faz o cookie de sessão sobreviver ao fechamento do navegador (ver AuthSession.REMEMBER_ME).
-				request.setAttribute(AuthSession.REMEMBER_ME, Boolean.TRUE);
-			}
+		boolean remember = Boolean.TRUE.equals(loginRequest.lembrar());
+		HttpSession session = request.getSession(true);
+		session.setMaxInactiveInterval(sessionTimeout(remember));
+		if (remember) {
+			// Faz o cookie de sessão sobreviver ao fechamento do navegador (ver AuthSession.REMEMBER_ME).
+			request.setAttribute(AuthSession.REMEMBER_ME, Boolean.TRUE);
+		}
 
-			SessionUser sessionUser = new SessionUser(
-					user.id(),
-					user.login(),
-					user.nome(),
-					user.email(),
-					user.perfil());
-			session.setAttribute(AuthSession.USER, sessionUser);
+		SessionUser sessionUser = new SessionUser(
+				user.id(),
+				user.login(),
+				user.nome(),
+				user.email(),
+				user.perfil());
+		session.setAttribute(AuthSession.USER, sessionUser);
 
-			return new AuthResponse(sessionUser);
-		}
-		catch (InvalidCredentialsException ex) {
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ex.getMessage());
-		}
-		catch (UnauthorizedGroupException ex) {
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, ex.getMessage());
-		}
-		catch (TooManyAttemptsException ex) {
-			throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
-		}
-		catch (AuthConfigurationException | ActiveDirectoryUnavailableException ex) {
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
-		}
+		return new AuthResponse(sessionUser);
 	}
 
 	@GetMapping("/me")

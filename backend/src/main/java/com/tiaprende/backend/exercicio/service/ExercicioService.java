@@ -3,6 +3,7 @@ package com.tiaprende.backend.exercicio.service;
 import com.tiaprende.backend.tutorial.repository.TutorialRepository;
 import com.tiaprende.backend.exception.ResourceNotFoundException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -84,7 +85,7 @@ public class ExercicioService {
 
         validar(request);
         tutorialRepository.findById(request.tutorialId())
-                .orElseThrow(() -> new com.tiaprende.backend.exception.ResourceNotFoundException("Tutorial nao encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Tutorial nao encontrado."));
 
         return ExercicioResponse.from(
                 exercicioRepository.save(request)
@@ -98,7 +99,7 @@ public class ExercicioService {
 
         validar(request);
         tutorialRepository.findById(request.tutorialId())
-                .orElseThrow(() -> new com.tiaprende.backend.exception.ResourceNotFoundException("Tutorial nao encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Tutorial nao encontrado."));
 
         Exercicio exercicio =
                 exercicioRepository
@@ -130,7 +131,7 @@ public class ExercicioService {
         String resposta =
                 request.resposta()
                         .trim()
-                        .toUpperCase(java.util.Locale.ROOT);
+                        .toUpperCase(Locale.ROOT);
 
         if (!RESPOSTAS_VALIDAS.contains(resposta)) {
 
@@ -221,7 +222,7 @@ public class ExercicioService {
         String resposta =
                 request.respostaCorreta()
                         .trim()
-                        .toUpperCase(java.util.Locale.ROOT);
+                        .toUpperCase(Locale.ROOT);
 
         if (!RESPOSTAS_VALIDAS.contains(resposta)) {
             throw new IllegalArgumentException(

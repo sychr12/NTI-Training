@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowUp, Eye, Pencil, Plus, Search, Trash2, X, type LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { ApiError, apiFetch, useApi } from "../lib/api";
-import type { Visual } from "../lib/catalog";
+import { normalizeText, type Visual } from "../lib/catalog";
 import type { Tutorial } from "../lib/types";
 import { LessonContent } from "./content";
 import { EmptyState, ErrorState, IconBadge, LoadingState } from "./ui";
@@ -25,7 +25,7 @@ function errorMessage(exception: unknown, fallback: string) {
 
 /* ---------- Formulário em popup ---------- */
 
-export function FormDialog({ title, fields, initial, onSubmit, onClose }: {
+function FormDialog({ title, fields, initial, onSubmit, onClose }: {
   title: string;
   fields: FieldConfig[];
   initial: FormValues;
@@ -142,7 +142,7 @@ function TutorialOrderField({ label, hint, value, onChange }: { label: string; h
 
 /* ---------- Exclusão com confirmação ---------- */
 
-export function DeleteButton({ onConfirm }: { onConfirm: () => Promise<void> }) {
+function DeleteButton({ onConfirm }: { onConfirm: () => Promise<void> }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   if (!confirming) {
@@ -174,10 +174,6 @@ export type CrudConfig<T extends { id: number }> = {
   toolbar?: ReactNode;
 };
 
-function normalize(value: string) {
-  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-}
-
 export function CrudPage<T extends { id: number }>({ config }: { config: CrudConfig<T> }) {
   const list = useApi<T[]>(config.listPath);
   const [editing, setEditing] = useState<{ item?: T } | null>(null);
@@ -187,8 +183,8 @@ export function CrudPage<T extends { id: number }>({ config }: { config: CrudCon
   const items = useMemo(() => list.data ?? [], [list.data]);
   const fields = typeof config.fields === "function" ? config.fields(items) : config.fields;
   const filtered = useMemo(() => {
-    const term = normalize(query.trim());
-    return term ? items.filter((item) => normalize(config.searchText?.(item) ?? config.title(item)).includes(term)) : items;
+    const term = normalizeText(query.trim());
+    return term ? items.filter((item) => normalizeText(config.searchText?.(item) ?? config.title(item)).includes(term)) : items;
   }, [items, query, config]);
 
   async function save(values: FormValues, item?: T) {

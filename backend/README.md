@@ -29,17 +29,36 @@ Alteracoes de perfil e desativacoes passam a valer na proxima requisicao, inclus
 | Rotas | Acesso |
 | --- | --- |
 | POST `/api/auth/login`, GET `/api/auth/me`, POST `/api/auth/logout` | Publico; `/me` retorna 401 sem sessao |
-| GET `/api/home`, `/api/perfil`, `/api/progresso`, `/api/progresso/trilhas` | Autenticado, dados do proprio usuario |
-| PUT `/api/progresso` | Autenticado; `tutorialId` e `status` (`EM_ANDAMENTO` ou `CONCLUIDO`) |
+| GET `/api/home`, `/api/perfil`, `/api/progresso`, `/api/progresso/trilhas`, `/api/conquistas` | Autenticado, dados do proprio usuario |
+| PUT `/api/progresso` | Autenticado; `tutorialId`, `status` (`EM_ANDAMENTO` ou `CONCLUIDO`) e `percentual` opcional |
+| POST `/api/conquistas/vistas` | Autenticado; marca as medalhas novas como vistas |
+| GET `/api/favoritos`, PUT e DELETE `/api/favoritos/{tutorialId}` | Autenticado |
+| GET e PUT `/api/perfil/preferencias` | Autenticado |
 | GET `/api/tutorials`, `/api/tutoriais`, `/api/trilhas`, `/api/dicas`, `/api/glossario`, `/api/exercicios?tutorialId=...` | Autenticado |
-| POST, PUT e DELETE de conteudo | PROFESSOR, SUPERVISOR ou ADMIN |
+| GET `/api/exercicios/minhas-respostas?tutorialId=...` | Autenticado; respostas ja dadas pelo usuario |
 | POST `/api/exercicios/{id}/responder` | Autenticado; `resposta` A, B, C ou D |
+| GET `/api/exercicios/gabarito?tutorialId=...` | PROFESSOR, SUPERVISOR ou ADMIN |
+| POST, PUT e DELETE de conteudo | PROFESSOR, SUPERVISOR ou ADMIN |
 | `/api/users` e `/api/users/{id}` | ADMIN |
 
 `/api/tutorials` e `/api/tutoriais` sao aliases. Exclusoes de conteudo sao logicas.
-A home conta tutoriais ativos iniciados/concluidos e exercicios ativos cuja ultima resposta foi correta.
-A lista de continuacao mostra tutoriais em andamento; o progresso individual permanece zero ate a conclusao,
-pois o modelo nao registra progresso parcial dentro do tutorial.
+Erros voltam como `{ "mensagem": ... }` com o status HTTP adequado (401, 403, 404, 409, 429...).
+
+Regras de progresso:
+
+- `EM_ANDAMENTO` guarda de 0 a 99% e nunca diminui; `CONCLUIDO` e sempre 100%.
+- So e possivel concluir um tutorial depois de responder todos os exercicios ativos dele; senao a API responde 409.
+- XP: 50 por tutorial concluido, 10 por resposta correta e 100 por trilha concluida.
+  Niveis: Iniciante (0), Aprendiz (100), Explorador (300), Especialista (600) e Mestre (1000).
+
+## Perfil dev (fora da rede do AD)
+
+```powershell
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
+```
+
+Sobe o PostgreSQL do `compose.yaml` pelo Docker, carrega o conteudo de exemplo de `data-dev.sql` e troca o AD
+por um usuario local ADMIN (`dev` / `dev123`, ou `NTI_DEV_USERNAME` e `NTI_DEV_PASSWORD`). Nunca use em producao.
 
 ## Testes
 

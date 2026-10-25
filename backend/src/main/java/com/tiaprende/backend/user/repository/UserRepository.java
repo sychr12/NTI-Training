@@ -74,26 +74,6 @@ public class UserRepository {
         .optional();
     }
 
-    public Optional <AppUser> findByLogin(String login){
-        return jdbcClient.sql("""
-                SELECT
-                    id,
-                    ad_object_guid,
-                    login,
-                    nome,
-                    email,
-                    perfil,
-                    ativo,
-                    ultimo_login
-                FROM usuarios
-                WHERE login = :login
-                """)
-                .param("login", login)
-                .query(this::mapUser)
-                .optional();
-
-    }
-
     public List<AppUser> findAll(){
         return jdbcClient.sql("""
             SELECT

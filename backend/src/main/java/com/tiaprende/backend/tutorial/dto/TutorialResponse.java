@@ -16,6 +16,6 @@ public record TutorialResponse(
 ) {
 
     public static TutorialResponse from (Tutorial tutorial){
-        return new TutorialResponse(tutorial.id(), tutorial.titulo(), tutorial.descrisao(), tutorial.conteudo(), tutorial.categoria(), tutorial.nivel(), tutorial.ativo(), tutorial.criadoEm(), tutorial.atulizadoEm());
+        return new TutorialResponse(tutorial.id(), tutorial.titulo(), tutorial.descricao(), tutorial.conteudo(), tutorial.categoria(), tutorial.nivel(), tutorial.ativo(), tutorial.criadoEm(), tutorial.atualizadoEm());
     }
 }

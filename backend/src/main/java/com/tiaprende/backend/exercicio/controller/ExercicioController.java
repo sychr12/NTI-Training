@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.tiaprende.backend.exercicio.dto.ExercicioGabaritoResponse;
@@ -13,6 +14,7 @@ import com.tiaprende.backend.exercicio.dto.ExercicioResponse;
 import com.tiaprende.backend.exercicio.dto.RespostaExercicioRequest;
 import com.tiaprende.backend.exercicio.dto.ResultadoExercicioResponse;
 import com.tiaprende.backend.exercicio.service.ExercicioService;
+import com.tiaprende.backend.login.session.AuthSession;
 
 @RestController
 @RequestMapping("/api/exercicios")
@@ -54,8 +56,8 @@ public class ExercicioController {
      */
     @GetMapping("/minhas-respostas")
     public List<MinhaRespostaResponse> listarMinhasRespostas(
-            @org.springframework.security.core.annotation.AuthenticationPrincipal
-            com.tiaprende.backend.login.session.AuthSession.SessionUser usuario,
+            @AuthenticationPrincipal
+            AuthSession.SessionUser usuario,
             @RequestParam Long tutorialId
     ) {
 
@@ -97,8 +99,8 @@ public class ExercicioController {
 
     @PostMapping("/{id}/responder")
     public ResultadoExercicioResponse responder(
-            @org.springframework.security.core.annotation.AuthenticationPrincipal
-            com.tiaprende.backend.login.session.AuthSession.SessionUser usuario,
+            @AuthenticationPrincipal
+            AuthSession.SessionUser usuario,
             @PathVariable Long id,
             @RequestBody RespostaExercicioRequest request
     ) {

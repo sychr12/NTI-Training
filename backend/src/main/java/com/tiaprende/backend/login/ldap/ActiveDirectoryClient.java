@@ -5,6 +5,7 @@ import com.tiaprende.backend.login.dto.AdUser;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import javax.naming.AuthenticationException;
@@ -189,7 +190,7 @@ public class ActiveDirectoryClient implements DirectoryAuthenticator {
 				|| ad.allowedGroups().isEmpty()) {
 			throw new AuthConfigurationException("Configuracao do Active Directory incompleta.");
 		}
-		if (ad.url().toLowerCase(java.util.Locale.ROOT).startsWith("ldap://") && !ad.allowInsecureLdap()) {
+		if (ad.url().toLowerCase(Locale.ROOT).startsWith("ldap://") && !ad.allowInsecureLdap()) {
 			throw new AuthConfigurationException(
 					"LDAP sem criptografia bloqueado. Configure NTI_AD_ALLOW_INSECURE_LDAP=true apenas temporariamente.");
 		}

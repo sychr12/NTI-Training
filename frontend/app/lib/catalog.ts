@@ -16,19 +16,20 @@ const categoryVisuals: Record<string, Visual> = {
 
 const defaultVisual: Visual = { icon: BookOpenText, color: "#7b61d1", soft: "#f1edff" };
 
-function normalize(value: string) {
-  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+/** Texto em minúsculas e sem acentos, para buscas e comparações ("Manutenção" → "manutencao"). */
+export function normalizeText(value: string) {
+  return value.normalize("NFD").replace(/\p{Diacritic}/gu, "").trim().toLowerCase();
 }
 
 export function categoryVisual(categoria: string | null | undefined): Visual {
-  return (categoria && categoryVisuals[normalize(categoria)]) || defaultVisual;
+  return (categoria && categoryVisuals[normalizeText(categoria)]) || defaultVisual;
 }
 
 const levelLabels: Record<string, string> = { iniciante: "Iniciante", intermediario: "Intermediário", avancado: "Avançado" };
 
 export function levelLabel(nivel: string | null | undefined) {
   if (!nivel) return "Iniciante";
-  return levelLabels[normalize(nivel)] ?? nivel;
+  return levelLabels[normalizeText(nivel)] ?? nivel;
 }
 
 const roleLabels: Record<string, string> = { ALUNO: "Aluno", PROFESSOR: "Professor", SUPERVISOR: "Supervisor", ADMIN: "Administrador" };

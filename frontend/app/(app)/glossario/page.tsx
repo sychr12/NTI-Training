@@ -4,11 +4,8 @@ import { BookA, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { EmptyState, ErrorState, LoadingState, PageHeading } from "../../components/ui";
 import { useApi } from "../../lib/api";
+import { normalizeText } from "../../lib/catalog";
 import type { TermoGlossario } from "../../lib/types";
-
-function normalize(value: string) {
-  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-}
 
 export default function GlossaryPage() {
   const terms = useApi<TermoGlossario[]>("/api/glossario");
@@ -16,10 +13,10 @@ export default function GlossaryPage() {
   const [open, setOpen] = useState<number | null>(null);
 
   const filtered = useMemo(() => {
-    const term = normalize(query.trim());
+    const term = normalizeText(query.trim());
     return [...(terms.data ?? [])]
       .sort((a, b) => a.termo.localeCompare(b.termo, "pt-BR"))
-      .filter((item) => !term || normalize(`${item.termo} ${item.definicao}`).includes(term));
+      .filter((item) => !term || normalizeText(`${item.termo} ${item.definicao}`).includes(term));
   }, [terms.data, query]);
 
   return <div className="page-stack">

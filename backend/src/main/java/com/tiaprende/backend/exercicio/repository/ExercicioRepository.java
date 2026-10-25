@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -151,7 +152,7 @@ public class ExercicioRepository {
                 .param(
                         "respostaCorreta",
                         request.respostaCorreta().trim()
-                                .toUpperCase(java.util.Locale.ROOT)
+                                .toUpperCase(Locale.ROOT)
                 )
                 .param(
                         "explicacao",
@@ -204,7 +205,7 @@ public class ExercicioRepository {
                 .param("alternativaD", request.alternativaD())
                 .param(
                         "respostaCorreta",
-                        request.respostaCorreta().trim().toUpperCase(java.util.Locale.ROOT)
+                        request.respostaCorreta().trim().toUpperCase(Locale.ROOT)
                 )
                 .param("explicacao", request.explicacao())
                 .query(this::mapExercicio)
