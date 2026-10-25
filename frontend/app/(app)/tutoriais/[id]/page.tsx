@@ -116,7 +116,20 @@ export default function TutorialPage() {
         <div className="tabs" role="tablist">{tabs.map((item) => <button key={item} role="tab" aria-selected={tab === item} className={tab === item ? "active" : ""} onClick={() => setTab(item)}>{item}{item === "Exercícios" && totalExercises > 0 && <i className="tab-count">{answered}/{totalExercises}</i>}</button>)}</div>
         <div className="detail-body" ref={contentRef}>{tab === "Conteúdo"
           ? <LessonContent text={data.conteudo} />
-          : <Quiz tutorialId={data.id} onAnswered={(count) => setAnswered((current) => Math.max(current, count))} />}</div>
+          : <Quiz tutorialId={data.id} onAnswered={(count) => setAnswered((current) => Math.max(current, count))} />}
+          {/* Fim do conteúdo/exercícios: onde a pessoa termina, ela pode concluir */}
+          <div className={`lesson-finish ${done ? "done" : ""}`}>
+            {done
+              ? <><CircleCheck size={22} /><span><strong>Você concluiu este tutorial!</strong><small>Ele já conta no seu progresso e nas suas conquistas.</small></span>
+                <Link className="secondary-button" href="/tutoriais">Ver outros tutoriais</Link></>
+              : <><Sparkles size={22} /><span>
+                <strong>{tab === "Conteúdo" ? "Terminou a leitura?" : "Terminou os exercícios?"}</strong>
+                <small>{tab === "Conteúdo" && totalExercises > answered ? "Faça os exercícios para fixar o conteúdo e depois marque como concluído." : "Marque como concluído para ganhar 50 XP."}</small>
+              </span>
+                {tab === "Conteúdo" && totalExercises > answered && <button className="secondary-button" onClick={() => { setTab("Exercícios"); contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }}><ClipboardCheck size={16} /> Fazer exercícios</button>}
+                <button className="primary-button" disabled={saving || !progress.data} onClick={() => saveStatus("CONCLUIDO")}><CircleCheck size={16} /> {saving ? "Salvando..." : "Marcar como concluído"}</button></>}
+          </div>
+        </div>
       </section>
 
       <aside className="lesson-aside">
@@ -124,7 +137,7 @@ export default function TutorialPage() {
           <h2>Sobre este tutorial</h2>
           <p><IconBadge visual={visual} size={15} /><span><small>Categoria</small>{data.categoria ?? "Geral"}</span></p>
           <p><GraduationCap size={16} /><span><small>Nível</small>{levelLabel(data.nivel)}</span></p>
-          <p><Layers size={16} /><span><small>Pratique</small><button className="link-button" onClick={() => setTab("Exercícios")}><ClipboardCheck size={14} /> {totalExercises > 0 ? `Fazer os ${totalExercises} exercícios` : "Ver exercícios"}</button></span></p>
+          <p><Layers size={16} /><span><small>Pratique</small><button className="link-button" onClick={() => setTab("Exercícios")}><ClipboardCheck size={14} /> {totalExercises === 1 ? "Fazer o exercício" : totalExercises > 1 ? `Fazer os ${totalExercises} exercícios` : "Ver exercícios"}</button></span></p>
           <div className="learning-actions"><FavoriteButton tutorialId={data.id} /><span>Salvar nos favoritos</span></div>
         </div>
         <button className={`complete-button ${done ? "done" : ""} ${readyToComplete ? "ready" : ""}`} disabled={saving || !progress.data} onClick={() => saveStatus(done ? "EM_ANDAMENTO" : "CONCLUIDO")}>

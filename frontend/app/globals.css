@@ -632,6 +632,15 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(11, 111, 251
 @keyframes medal-pop { from { transform: scale(0) rotate(-30deg); } to { transform: scale(1) rotate(0); } }
 @keyframes confetti-fall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 0; transform: translateY(110px) rotate(320deg); } }
 
+/* Bloco de conclusão no fim do tutorial */
+.lesson-finish { margin-top: 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 16px 18px; border: 1px dashed var(--blue-line); border-radius: 12px; background: var(--blue-surface); }
+.lesson-finish > svg { flex: 0 0 auto; color: var(--blue); }
+.lesson-finish > span { min-width: 200px; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.lesson-finish strong { font-size: 13px; }
+.lesson-finish small { color: var(--muted); font-size: 11px; line-height: 1.45; }
+.lesson-finish.done { border-style: solid; border-color: var(--success-line); background: var(--success-soft); }
+.lesson-finish.done > svg { color: var(--success); }
+
 /* Progresso parcial do tutorial */
 .hero-progress { max-width: 420px; margin-top: 14px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; font-weight: 600; }
 .hero-progress b { color: var(--ink); font-size: 12px; }
