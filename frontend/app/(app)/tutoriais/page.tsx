@@ -52,7 +52,7 @@ function TutorialList({ initialQuery, initialCategory }: { initialQuery: string;
     {tutorials.error ? <ErrorState error={tutorials.error} onRetry={tutorials.reload} />
       : !tutorials.data ? <LoadingState rows={4} />
         : <div className="tutorial-list">
-          {filtered.map((tutorial) => <TutorialRow key={tutorial.id} tutorial={tutorial} status={byTutorial.get(tutorial.id)} />)}
+          {filtered.map((tutorial) => <TutorialRow key={tutorial.id} tutorial={tutorial} progress={byTutorial.get(tutorial.id)} />)}
           {filtered.length === 0 && <EmptyState title="Nenhum tutorial encontrado" description="Tente outro termo ou escolha uma categoria diferente." />}
         </div>}
   </>;

@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { PROGRESS_CHANGED_EVENT, useApi } from "../lib/api";
 import { canManageContent, initials, roleLabel } from "../lib/catalog";
 import type { Perfil, SessionUser } from "../lib/types";
+import { StreakLine } from "./achievements";
 import { useAuth } from "./auth";
 import { useTheme } from "./theme";
 import { Brand, ProgressTrack } from "./ui";
@@ -55,7 +56,7 @@ export function Sidebar({ open, onClose, onLogout }: { open: boolean; onClose: (
       return <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined} onClick={onClose}><Icon size={17} /><span>{item.label}</span></Link>;
     })}</nav>
     <div className="sidebar-footer">
-      <Link href="/progresso" className="sidebar-progress" onClick={onClose}><span><Trophy size={16} /> Progresso geral</span><strong>{perfil.data ? `${progress}%` : "—"}</strong><ProgressTrack value={progress} /></Link>
+      <Link href="/progresso" className="sidebar-progress" onClick={onClose}><span><Trophy size={16} /> Progresso geral</span><strong>{perfil.data ? `${progress}%` : "—"}</strong><ProgressTrack value={progress} /><StreakLine /></Link>
       <button className="logout-button" onClick={onLogout}><LogOut size={17} /> Sair</button>
     </div>
   </aside></>;

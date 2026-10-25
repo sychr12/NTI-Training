@@ -3,6 +3,7 @@
 import { CircleCheck, CirclePlay, Route, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
+import { MedalGrid } from "../../components/achievements";
 import { EmptyState, ErrorState, IconBadge, LoadingState, PageHeading, ProgressTrack } from "../../components/ui";
 import { PROGRESS_CHANGED_EVENT, useApi } from "../../lib/api";
 import type { Visual } from "../../lib/catalog";
@@ -48,6 +49,11 @@ export default function ProgressPage() {
     {!metrics ? <LoadingState rows={1} /> : <div className="metric-grid">{metrics.map((metric) => <article className="metric-card" key={metric.label}>
       <IconBadge visual={metric.visual} /><span><small>{metric.label}</small><strong>{metric.value}</strong></span>
     </article>)}</div>}
+
+    <section className="content-section" id="conquistas">
+      <div className="section-heading"><div><h2>Conquistas</h2><p>Seu nível, sua sequência de estudos e as medalhas que você já ganhou</p></div></div>
+      <MedalGrid />
+    </section>
 
     <div className="progress-columns">
       <section className="panel">

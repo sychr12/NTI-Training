@@ -22,6 +22,6 @@ export default function FavoritesPage() {
     {tutorials.error ? <ErrorState error={tutorials.error} onRetry={tutorials.reload} />
       : !tutorials.data || !ready ? <LoadingState rows={3} />
         : favorites.length === 0 ? <EmptyState icon={Star} title="Nenhum favorito ainda" description="Toque no marcador de um tutorial para salvá-lo aqui." action={<Link className="secondary-button" href="/tutoriais">Ver tutoriais</Link>} />
-          : <div className="tutorial-list">{favorites.map((tutorial) => <TutorialRow key={tutorial.id} tutorial={tutorial} status={byTutorial.get(tutorial.id)} />)}</div>}
+          : <div className="tutorial-list">{favorites.map((tutorial) => <TutorialRow key={tutorial.id} tutorial={tutorial} progress={byTutorial.get(tutorial.id)} />)}</div>}
   </div>;
 }

@@ -24,7 +24,18 @@ export type Usuario = { id: number; login: string; nome: string | null; email: s
 export type ResultadoExercicio ={ correto: boolean; respostaCorreta: string; explicacao: string | null };
 
 export type StatusProgresso = "EM_ANDAMENTO" | "CONCLUIDO";
-export type ProgressoTutorial = { tutorialId: number; status: StatusProgresso; iniciadoEm: string; concluidoEm: string | null; atualizadoEm: string };
+export type ProgressoTutorial = { tutorialId: number; status: StatusProgresso; percentual: number; iniciadoEm: string; concluidoEm: string | null; atualizadoEm: string };
+
+export type Medalha = {
+  codigo: string; titulo: string; descricao: string; icone: string;
+  progresso: number; meta: number; conquistada: boolean; conquistadaEm: string | null; nova: boolean;
+};
+export type Conquistas = {
+  xp: number;
+  nivel: { numero: number; nome: string; xpInicio: number; xpProximo: number | null };
+  sequencia: { atual: number; melhor: number; estudouHoje: boolean };
+  medalhas: Medalha[];
+};
 export type ProgressoTrilha = { trilhaId: number; titulo: string; totalTutoriais: number; tutoriaisConcluidos: number; percentual: number };
 
 export type Favorito = { tutorialId: number; criadoEm: string };

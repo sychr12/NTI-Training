@@ -569,6 +569,88 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(11, 111, 251
   .detail-body { padding: 14px; }
 }
 
+/* Conquistas */
+.achievement-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; }
+.achievement-card { min-width: 0; display: flex; align-items: center; gap: 13px; padding: 15px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.achievement-card > span:nth-child(2) { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.achievement-card small { color: var(--muted); font-size: 10px; font-weight: 600; }
+.achievement-card strong { font-size: 18px; line-height: 1.2; }
+.achievement-card em { color: var(--muted); font-size: 10px; font-style: normal; }
+.achievement-card .progress-track { margin: 4px 0 2px; }
+.achievement-icon { width: 46px; height: 46px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 12px; }
+.achievement-card.streak .achievement-icon { color: #9aa3b2; background: var(--hover); }
+.achievement-card.streak.lit .achievement-icon { color: #fff; background: linear-gradient(135deg, #ff9f43, #ff5e3a); box-shadow: 0 8px 18px -8px rgba(255, 94, 58, .7); animation: flame-flicker 2.4s ease-in-out infinite; }
+.achievement-card.xp .achievement-icon { color: #fff; background: linear-gradient(135deg, #7b61ff, #0b6ffb); }
+.achievement-card.medals .achievement-icon { color: #fff; background: linear-gradient(135deg, #ffc94d, #f59e0b); }
+.achievement-card.medals { transition: border-color .18s, transform .18s; }
+.achievement-card.medals:hover { transform: translateY(-2px); border-color: var(--blue-line); }
+.achievement-card.medals > svg { color: var(--faint); }
+.medal-row { display: flex; gap: 4px; margin-top: 3px; }
+.medal-row i { width: 22px; height: 22px; display: grid; place-items: center; color: var(--faint); background: var(--hover); border-radius: 50%; }
+.medal-row i.earned { color: #b45309; background: #fde68a; }
+@keyframes flame-flicker { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.06) rotate(-3deg); } }
+
+.level-banner { display: flex; align-items: center; gap: 16px; padding: 16px 18px; margin-bottom: 12px; color: #fff; border-radius: 12px; background: linear-gradient(120deg, #0b6ffb, #7b61ff); }
+.level-number { width: 58px; height: 58px; display: grid; place-content: center; flex: 0 0 auto; text-align: center; border: 2px solid rgba(255, 255, 255, .5); border-radius: 50%; font-size: 22px; font-weight: 800; line-height: 1; }
+.level-number small { font-size: 8px; font-weight: 700; text-transform: uppercase; opacity: .85; }
+.level-banner > span:nth-child(2) { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.level-banner strong { font-size: 17px; }
+.level-banner small { font-size: 11px; opacity: .85; }
+.level-banner .progress-track { background: rgba(255, 255, 255, .25); }
+.level-banner .progress-track i { background: #fff; }
+.level-streak { display: flex; align-items: center; gap: 6px; padding-left: 16px; border-left: 1px solid rgba(255, 255, 255, .3); }
+.level-streak b { font-size: 22px; }
+.level-streak small { line-height: 1.3; }
+.medal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 11px; }
+.medal-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 14px 14px; text-align: center; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.medal-card strong { font-size: 12px; }
+.medal-card p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+.medal-icon { position: relative; width: 56px; height: 56px; display: grid; place-items: center; flex: 0 0 auto; margin-bottom: 4px; border-radius: 50%; }
+.medal-card.earned .medal-icon, .achievement-toast .medal-icon { color: #fff; background: radial-gradient(circle at 30% 30%, #ffe08a, #f59e0b 70%); box-shadow: 0 0 0 4px #fef3c7, 0 10px 20px -8px rgba(245, 158, 11, .8); }
+.medal-card.locked .medal-icon { color: var(--faint); background: var(--hover); }
+.medal-lock { position: absolute; right: -2px; bottom: -2px; padding: 3px; width: 20px; height: 20px; color: #fff; background: var(--faint); border: 2px solid var(--surface); border-radius: 50%; }
+.medal-date { margin-top: auto; color: #b45309; font-size: 10px; font-weight: 700; }
+.medal-progress { width: 100%; margin-top: auto; display: flex; align-items: center; gap: 8px; }
+.medal-progress .progress-track { flex: 1; }
+.medal-progress small { color: var(--muted); font-size: 10px; font-weight: 700; }
+:root[data-theme="dark"] .medal-row i.earned { color: #fde68a; background: rgba(245, 158, 11, .25); }
+:root[data-theme="dark"] .medal-card.earned .medal-icon, :root[data-theme="dark"] .achievement-toast .medal-icon { box-shadow: 0 0 0 4px rgba(245, 158, 11, .25), 0 10px 20px -8px rgba(245, 158, 11, .8); }
+:root[data-theme="dark"] .medal-date { color: #fbbf24; }
+
+.sidebar-streak { margin-top: 8px; display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 10px; font-weight: 600; }
+.sidebar-streak.lit svg { color: #ff5e3a; }
+
+.achievement-toast { position: fixed; right: 24px; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 60; width: min(380px, calc(100vw - 32px)); display: flex; align-items: center; gap: 14px; padding: 16px; overflow: hidden; color: var(--ink); border: 1px solid #fcd34d; border-radius: 14px; background: var(--surface); box-shadow: 0 24px 50px -16px rgba(15, 30, 60, .45); animation: toast-in .5s cubic-bezier(.3, 1.4, .5, 1) both; }
+.achievement-toast > span:nth-child(3) { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.achievement-toast small { display: inline-flex; align-items: center; gap: 4px; color: #b45309; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.achievement-toast strong { font-size: 15px; }
+.achievement-toast em { color: var(--muted); font-size: 11px; font-style: normal; }
+.achievement-toast .medal-icon { margin: 0; animation: medal-pop .7s cubic-bezier(.3, 1.6, .5, 1) .15s both; }
+.confetti { position: absolute; inset: 0; pointer-events: none; }
+.confetti i { position: absolute; top: -10px; width: 7px; height: 11px; border-radius: 2px; opacity: 0; animation: confetti-fall 1.6s ease-in forwards; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(30px) scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes medal-pop { from { transform: scale(0) rotate(-30deg); } to { transform: scale(1) rotate(0); } }
+@keyframes confetti-fall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 0; transform: translateY(110px) rotate(320deg); } }
+
+/* Progresso parcial do tutorial */
+.hero-progress { max-width: 420px; margin-top: 14px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; font-weight: 600; }
+.hero-progress b { color: var(--ink); font-size: 12px; }
+.tab-count { margin-left: 6px; padding: 1px 6px; border-radius: 99px; background: var(--hover); font-size: 9px; font-style: normal; }
+.tabs button.active .tab-count { background: rgba(255, 255, 255, .25); }
+.complete-button.ready { color: #fff; border-color: var(--success); background: linear-gradient(135deg, #15956b, #22c38e); animation: ready-pulse 1.8s ease-in-out infinite; }
+@keyframes ready-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(21, 149, 107, .45); } 50% { box-shadow: 0 0 0 8px rgba(21, 149, 107, 0); } }
+
+@media (max-width: 1100px) {
+  .achievement-strip { grid-template-columns: 1fr 1fr; }
+  .achievement-card.medals { grid-column: 1 / -1; }
+}
+@media (max-width: 680px) {
+  .achievement-strip { grid-template-columns: 1fr; }
+  .level-banner { flex-wrap: wrap; }
+  .level-streak { padding-left: 0; border-left: 0; }
+  .achievement-toast { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+}
+
 /* Área de gerenciamento */
 .admin-tabs { flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .admin-tabs a { min-height: 32px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 6px; color: var(--muted); font-size: 11px; font-weight: 700; }

@@ -3,6 +3,7 @@
 import { ArrowRight, BookOpenText, ChevronRight, CirclePlay, Clock3 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { AchievementsSummary } from "../components/achievements";
 import { useAuth } from "../components/auth";
 import { FavoriteButton } from "../components/content";
 import { EmptyState, ErrorState, IconBadge, LoadingState, ProgressTrack } from "../components/ui";
@@ -45,6 +46,8 @@ export default function DashboardPage() {
         <p><b>Seu progresso geral</b><span>{home.data ? `${home.data.estatisticas.cursosConcluido} tutoriais concluídos · ${home.data.estatisticas.exerciciosConcluidos} exercícios certos` : "Carregando..."}</span></p>
       </div>
     </section>
+
+    <AchievementsSummary />
 
     {home.error && <ErrorState error={home.error} onRetry={home.reload} />}
 

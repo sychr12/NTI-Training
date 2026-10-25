@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { AchievementToaster } from "../components/achievements";
 import { Sidebar, Topbar } from "../components/AppChrome";
 import { useAuth } from "../components/auth";
 import { Brand } from "../components/ui";
@@ -24,5 +25,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <Topbar user={auth.user} onMenu={() => setMobileMenu(true)} />
       <main className="page-content">{children}</main>
     </div>
+    <AchievementToaster />
   </div>;
 }

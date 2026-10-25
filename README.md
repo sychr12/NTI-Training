@@ -96,6 +96,15 @@ Favoritos (`/api/favoritos`) e preferencias do perfil (`/api/perfil/preferencias
 por usuario. Favoritos que estavam salvos so no navegador (versoes anteriores) sao enviados ao servidor
 no primeiro acesso.
 
+## Progresso e conquistas
+
+- **Progresso parcial**: ao ler o tutorial (cada bloco conta depois de 1,2 s visivel) e responder os exercicios,
+  o progresso sobe ate 99% (70% leitura + 30% exercicios, quando o tutorial tem exercicios). Concluir grava 100%.
+  O servidor nunca diminui o valor (`PUT /api/progresso` com `percentual`).
+- **Conquistas** (`GET /api/conquistas`): XP (50 por tutorial concluido, 10 por exercicio acertado, 100 por trilha
+  completa), nivel (Iniciante, Aprendiz, Explorador, Especialista, Mestre), sequencia de dias de estudo e 7 medalhas.
+  Medalhas novas aparecem uma unica vez em um aviso animado (`POST /api/conquistas/vistas`).
+
 ## Gerenciar conteudo
 
 Usuarios com perfil PROFESSOR, SUPERVISOR ou ADMIN veem o item **Gerenciar** no menu (`/gerenciar`), onde

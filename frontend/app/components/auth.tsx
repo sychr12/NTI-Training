@@ -2,8 +2,15 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { apiFetch, SESSION_EXPIRED_EVENT } from "../lib/api";
+import { resetAchievements } from "../lib/achievements";
 import { resetFavorites } from "../lib/favorites";
 import type { SessionUser } from "../lib/types";
+
+// Dados guardados em memória por usuário: descartados ao entrar e ao sair.
+function resetUserData() {
+  resetFavorites();
+  resetAchievements();
+}
 
 type AuthState =
   | { status: "loading"; user: null }
@@ -29,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Qualquer 401 da API (sessão expirada ou derrubada no servidor) volta para o login.
     const expire = () => {
-      resetFavorites();
+      resetUserData();
       setState({ status: "anonymous", user: null });
     };
     window.addEventListener(SESSION_EXPIRED_EVENT, expire);
@@ -39,15 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Favoritos ficam em memória por usuário: são descartados ao entrar e ao sair.
   const signIn = useCallback((user: SessionUser) => {
-    resetFavorites();
+    resetUserData();
     setState({ status: "authenticated", user });
   }, []);
 
   const signOut = useCallback(async () => {
     await apiFetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
-    resetFavorites();
+    resetUserData();
     setState({ status: "anonymous", user: null });
   }, []);
 

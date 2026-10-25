@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo } from "react";
 import { PROGRESS_CHANGED_EVENT, useApi } from "./api";
-import type { ProgressoTutorial, StatusProgresso } from "./types";
+import type { ProgressoTutorial } from "./types";
 
-/** Progresso do usuário em cada tutorial (tutorialId → status), atualizado quando o progresso muda. */
+/** Progresso do usuário em cada tutorial (tutorialId → progresso), atualizado quando o progresso muda. */
 export function useProgress() {
   const progress = useApi<ProgressoTutorial[]>("/api/progresso");
   const { reload } = progress;
@@ -14,7 +14,7 @@ export function useProgress() {
     return () => window.removeEventListener(PROGRESS_CHANGED_EVENT, reload);
   }, [reload]);
 
-  const byTutorial = useMemo(() => new Map<number, StatusProgresso>((progress.data ?? []).map((item) => [item.tutorialId, item.status])), [progress.data]);
+  const byTutorial = useMemo(() => new Map<number, ProgressoTutorial>((progress.data ?? []).map((item) => [item.tutorialId, item])), [progress.data]);
   return { ...progress, byTutorial };
 }
 

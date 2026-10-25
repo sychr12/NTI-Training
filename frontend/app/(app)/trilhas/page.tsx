@@ -34,7 +34,7 @@ export default function TrailsPage() {
                 {expanded ? <ChevronDown size={19} /> : <ChevronRight size={19} />}
               </button>
               {expanded && <ol className="trail-steps">{tutorials.map((item) => {
-                const done = byTutorial.get(item.id) === "CONCLUIDO";
+                const done = byTutorial.get(item.id)?.status === "CONCLUIDO";
                 return <li key={item.id} className={done ? "done" : ""}>
                   <span>{done ? <CircleCheck size={16} /> : item.ordem}</span>
                   <Link href={`/tutoriais/${item.id}`}>{item.titulo}</Link>

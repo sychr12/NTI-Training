@@ -14,7 +14,7 @@ function options(exercise: Exercicio): Record<Letter, string> {
 }
 
 /** Exercícios de múltipla escolha de um tutorial; cada resposta é corrigida pela API. */
-export function Quiz({ tutorialId }: { tutorialId: number }) {
+export function Quiz({ tutorialId, onAnswered }: { tutorialId: number; onAnswered?: (answered: number) => void }) {
   const exercises = useApi<Exercicio[]>(`/api/exercicios?tutorialId=${tutorialId}`);
   const [answers, setAnswers] = useState<Record<number, { letter: Letter; result: ResultadoExercicio }>>({});
   const [sending, setSending] = useState<number | null>(null);
@@ -28,7 +28,9 @@ export function Quiz({ tutorialId }: { tutorialId: number }) {
         method: "POST",
         body: JSON.stringify({ resposta: letter }),
       });
-      setAnswers((current) => ({ ...current, [exercise.id]: { letter, result } }));
+      const next = { ...answers, [exercise.id]: { letter, result } };
+      setAnswers(next);
+      onAnswered?.(Object.keys(next).length);
       notifyProgressChanged();
     }
     catch (exception) {
