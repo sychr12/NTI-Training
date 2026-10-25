@@ -77,6 +77,36 @@ class ApiIntegrationTests {
     }
 
     @Test
+    void favoritesArePersistedPerUser() throws Exception {
+        var session = session("ALUNO");
+        mvc.perform(get("/api/favoritos")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/favoritos").session(session)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(put("/api/favoritos/9001").session(session)).andExpect(status().isNoContent());
+        mvc.perform(put("/api/favoritos/9001").session(session)).andExpect(status().isNoContent());
+        mvc.perform(get("/api/favoritos").session(session)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].tutorialId").value(9001));
+        mvc.perform(put("/api/favoritos/9999").session(session)).andExpect(status().isNotFound());
+        mvc.perform(delete("/api/favoritos/9001").session(session)).andExpect(status().isNoContent());
+        mvc.perform(get("/api/favoritos").session(session)).andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void preferencesDefaultToOnAndKeepUnsentFields() throws Exception {
+        var session = session("ALUNO");
+        mvc.perform(get("/api/perfil/preferencias").session(session)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.lembretesEstudo").value(true))
+                .andExpect(jsonPath("$.notificacoesEmail").value(true));
+        mvc.perform(put("/api/perfil/preferencias").session(session).contentType("application/json")
+                .content("{\"lembretesEstudo\":false}")).andExpect(status().isOk());
+        mvc.perform(put("/api/perfil/preferencias").session(session).contentType("application/json")
+                .content("{\"notificacoesEmail\":false}")).andExpect(status().isOk());
+        mvc.perform(get("/api/perfil/preferencias").session(session))
+                .andExpect(jsonPath("$.lembretesEstudo").value(false))
+                .andExpect(jsonPath("$.notificacoesEmail").value(false));
+    }
+
+    @Test
     void answerKeyIsOnlyVisibleToContentEditors() throws Exception {
         jdbc.sql("INSERT INTO exercicios (id, tutorial_id, pergunta, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, explicacao) VALUES (9001, 9001, 'Pergunta', 'A', 'B', 'C', 'D', 'C', 'Porque sim')").update();
         mvc.perform(get("/api/exercicios/gabarito?tutorialId=9001").session(session("ALUNO"))).andExpect(status().isForbidden());

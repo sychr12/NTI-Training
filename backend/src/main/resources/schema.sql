@@ -92,3 +92,19 @@ CREATE TABLE IF NOT EXISTS respostas_exercicios (
 );
 CREATE INDEX IF NOT EXISTS idx_exercicios_tutorial ON exercicios(tutorial_id);
 CREATE INDEX IF NOT EXISTS idx_trilha_tutoriais_tutorial ON trilha_tutoriais(tutorial_id);
+
+-- Favoritos de cada usuario (antes ficavam so no navegador).
+CREATE TABLE IF NOT EXISTS favoritos (
+    usuario_id BIGINT NOT NULL REFERENCES usuarios(id),
+    tutorial_id BIGINT NOT NULL REFERENCES tutoriais(id),
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (usuario_id, tutorial_id)
+);
+
+-- Preferencias da tela de perfil; sem registro, valem os padroes (tudo ligado).
+CREATE TABLE IF NOT EXISTS preferencias_usuarios (
+    usuario_id BIGINT PRIMARY KEY REFERENCES usuarios(id),
+    lembretes_estudo BOOLEAN NOT NULL DEFAULT TRUE,
+    notificacoes_email BOOLEAN NOT NULL DEFAULT TRUE,
+    atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
