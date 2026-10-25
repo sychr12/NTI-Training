@@ -92,7 +92,9 @@ Nunca use o perfil `dev` em producao.
 Cada tela tem sua propria rota e busca os dados na API do backend:
 `/login`, `/` (inicio), `/tutoriais`, `/tutoriais/[id]`, `/trilhas`, `/exercicios`, `/dicas`,
 `/glossario`, `/progresso`, `/favoritos` e `/configuracoes`. Sem sessao, o app redireciona para `/login`.
-Os favoritos ficam salvos no navegador, pois o backend ainda nao tem API para eles.
+Favoritos (`/api/favoritos`) e preferencias do perfil (`/api/perfil/preferencias`) ficam salvos no servidor,
+por usuario. Favoritos que estavam salvos so no navegador (versoes anteriores) sao enviados ao servidor
+no primeiro acesso.
 
 ## Gerenciar conteudo
 

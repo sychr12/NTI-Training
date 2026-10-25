@@ -27,6 +27,9 @@ export type StatusProgresso = "EM_ANDAMENTO" | "CONCLUIDO";
 export type ProgressoTutorial = { tutorialId: number; status: StatusProgresso; iniciadoEm: string; concluidoEm: string | null; atualizadoEm: string };
 export type ProgressoTrilha = { trilhaId: number; titulo: string; totalTutoriais: number; tutoriaisConcluidos: number; percentual: number };
 
+export type Favorito = { tutorialId: number; criadoEm: string };
+export type Preferencias = { lembretesEstudo: boolean; notificacoesEmail: boolean };
+
 export type Home = {
   nomeUsuario: string;
   estatisticas: { cursosEmAndamento: number; cursosConcluido: number; exerciciosConcluidos: number; progressoGeral: number };

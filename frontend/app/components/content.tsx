@@ -14,10 +14,10 @@ export function StatusChip({ status }: { status: StatusProgresso | undefined }) 
 }
 
 export function FavoriteButton({ tutorialId }: { tutorialId: number }) {
-  const { isFavorite, toggle } = useFavorites();
+  const { isFavorite, toggle, ready } = useFavorites();
   const active = isFavorite(tutorialId);
   const label = active ? "Remover dos favoritos" : "Adicionar aos favoritos";
-  return <button className={`icon-button ${active ? "favorite-active" : ""}`} onClick={() => toggle(tutorialId)} aria-label={label} aria-pressed={active} title={label}>
+  return <button className={`icon-button ${active ? "favorite-active" : ""}`} onClick={() => toggle(tutorialId)} disabled={!ready} aria-label={label} aria-pressed={active} title={label}>
     <Bookmark size={18} fill={active ? "currentColor" : "none"} />
   </button>;
 }
