@@ -646,6 +646,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(11, 111, 251
 .hero-progress b { color: var(--ink); font-size: 12px; }
 .tab-count { margin-left: 6px; padding: 1px 6px; border-radius: 99px; background: var(--hover); font-size: 9px; font-style: normal; }
 .tabs button.active .tab-count { background: rgba(255, 255, 255, .25); }
+.complete-button.locked { padding: 0 14px; color: var(--text-2); border-style: dashed; background: var(--surface); text-align: center; }
+.complete-button.locked:hover:not(:disabled) { color: var(--blue); border-color: var(--blue); }
 .complete-button.ready { color: #fff; border-color: var(--success); background: linear-gradient(135deg, #15956b, #22c38e); animation: ready-pulse 1.8s ease-in-out infinite; }
 @keyframes ready-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(21, 149, 107, .45); } 50% { box-shadow: 0 0 0 8px rgba(21, 149, 107, 0); } }
 

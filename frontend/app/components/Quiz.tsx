@@ -1,9 +1,9 @@
 "use client";
 
 import { CircleCheck, ClipboardCheck, RotateCcw, CircleX } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ApiError, apiFetch, notifyProgressChanged, useApi } from "../lib/api";
-import type { Exercicio, ResultadoExercicio } from "../lib/types";
+import type { Exercicio, MinhaResposta, ResultadoExercicio } from "../lib/types";
 import { EmptyState, ErrorState, LoadingState } from "./ui";
 
 const LETTERS = ["A", "B", "C", "D"] as const;
@@ -13,12 +13,25 @@ function options(exercise: Exercicio): Record<Letter, string> {
   return { A: exercise.alternativaA, B: exercise.alternativaB, C: exercise.alternativaC, D: exercise.alternativaD };
 }
 
-/** Exercícios de múltipla escolha de um tutorial; cada resposta é corrigida pela API. */
-export function Quiz({ tutorialId, onAnswered }: { tutorialId: number; onAnswered?: (answered: number) => void }) {
+type Answer = { letter: Letter; result: ResultadoExercicio };
+
+/**
+ * Exercícios de múltipla escolha de um tutorial; cada resposta é corrigida pela API.
+ * Respostas dadas em visitas anteriores aparecem já corrigidas; "Refazer" limpa a tela para responder de novo.
+ */
+export function Quiz({ tutorialId, onAnswered }: { tutorialId: number; onAnswered?: (exerciseId: number) => void }) {
   const exercises = useApi<Exercicio[]>(`/api/exercicios?tutorialId=${tutorialId}`);
-  const [answers, setAnswers] = useState<Record<number, { letter: Letter; result: ResultadoExercicio }>>({});
+  const previous = useApi<MinhaResposta[]>(`/api/exercicios/minhas-respostas?tutorialId=${tutorialId}`);
+  const [local, setLocal] = useState<Record<number, Answer>>({});
+  const [restarted, setRestarted] = useState(false);
   const [sending, setSending] = useState<number | null>(null);
   const [error, setError] = useState("");
+
+  const fromServer = useMemo(() => Object.fromEntries((previous.data ?? []).map((item) => [item.exercicioId, {
+    letter: item.resposta as Letter,
+    result: { correto: item.correto, respostaCorreta: item.respostaCorreta, explicacao: item.explicacao },
+  }])) as Record<number, Answer>, [previous.data]);
+  const answers = restarted ? local : { ...fromServer, ...local };
 
   async function answer(exercise: Exercicio, letter: Letter) {
     setSending(exercise.id);
@@ -28,9 +41,8 @@ export function Quiz({ tutorialId, onAnswered }: { tutorialId: number; onAnswere
         method: "POST",
         body: JSON.stringify({ resposta: letter }),
       });
-      const next = { ...answers, [exercise.id]: { letter, result } };
-      setAnswers(next);
-      onAnswered?.(Object.keys(next).length);
+      setLocal((current) => ({ ...current, [exercise.id]: { letter, result } }));
+      onAnswered?.(exercise.id);
       notifyProgressChanged();
     }
     catch (exception) {
@@ -42,7 +54,7 @@ export function Quiz({ tutorialId, onAnswered }: { tutorialId: number; onAnswere
   }
 
   if (exercises.error) return <ErrorState error={exercises.error} onRetry={exercises.reload} />;
-  if (!exercises.data) return <LoadingState rows={2} />;
+  if (!exercises.data || (!previous.data && !previous.error)) return <LoadingState rows={2} />;
   if (exercises.data.length === 0) {
     return <EmptyState icon={ClipboardCheck} title="Sem exercícios por enquanto" description="Este tutorial ainda não tem exercícios cadastrados." />;
   }
@@ -72,7 +84,7 @@ export function Quiz({ tutorialId, onAnswered }: { tutorialId: number; onAnswere
     {error && <p className="login-error" role="alert">{error}</p>}
     {finished && <div className="quiz-summary">
       <strong>Você acertou {correct} de {exercises.data.length}.</strong>
-      <button className="secondary-button" onClick={() => setAnswers({})}><RotateCcw size={15} /> Refazer</button>
+      <button className="secondary-button" onClick={() => { setLocal({}); setRestarted(true); }}><RotateCcw size={15} /> Refazer</button>
     </div>}
   </div>;
 }

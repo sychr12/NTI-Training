@@ -11,7 +11,7 @@ import { ApiError, apiFetch, notifyProgressChanged, useApi } from "../../../lib/
 import { categoryVisual, levelLabel, readingTime } from "../../../lib/catalog";
 import { useProgress } from "../../../lib/progress";
 import { useReadingProgress } from "../../../lib/reading";
-import type { Exercicio, StatusProgresso, Tutorial } from "../../../lib/types";
+import type { Exercicio, MinhaResposta, StatusProgresso, Tutorial } from "../../../lib/types";
 
 const tabs = ["Conteúdo", "Exercícios"] as const;
 
@@ -29,7 +29,8 @@ export default function TutorialPage() {
   const [tab, setTab] = useState<(typeof tabs)[number]>("Conteúdo");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [answered, setAnswered] = useState(0);
+  const myAnswers = useApi<MinhaResposta[]>(`/api/exercicios/minhas-respostas?tutorialId=${id}`);
+  const [answeredNow, setAnsweredNow] = useState<number[]>([]);
   const contentRef = useRef<HTMLDivElement>(null);
   const lastSent = useRef(0);
 
@@ -37,11 +38,20 @@ export default function TutorialPage() {
   const done = saved?.status === "CONCLUIDO";
   const read = useReadingProgress(contentRef, tab === "Conteúdo" && !!tutorial.data);
   const totalExercises = exercises.data?.length ?? 0;
+  // Exercícios feitos = respondidos em visitas anteriores + nesta visita.
+  const answeredIds = new Set([...(myAnswers.data ?? []).map((item) => item.exercicioId), ...answeredNow]);
+  const answered = (exercises.data ?? []).filter((exercise) => answeredIds.has(exercise.id)).length;
+  // O servidor só deixa concluir com todos os exercícios respondidos.
+  const pending = totalExercises - answered;
+  const canComplete = pending === 0 && !!exercises.data && !!myAnswers.data;
+  const goToExercises = () => { setTab("Exercícios"); contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); };
+  const pendingText = !exercises.data || !myAnswers.data ? "Carregando exercícios..."
+    : pending === 1 ? "Responda o exercício para concluir" : `Responda os ${pending} exercícios para concluir`;
   const computed = Math.min(99, Math.round(totalExercises > 0
     ? read * READING_WEIGHT + (answered / totalExercises) * EXERCISES_WEIGHT
     : read * 100));
   const percent = done ? 100 : Math.max(saved?.percentual ?? 0, computed);
-  const readyToComplete = !done && computed >= 99;
+  const readyToComplete = !done && canComplete && computed >= 99;
 
   async function saveStatus(next: StatusProgresso) {
     setSaving(true);
@@ -116,18 +126,23 @@ export default function TutorialPage() {
         <div className="tabs" role="tablist">{tabs.map((item) => <button key={item} role="tab" aria-selected={tab === item} className={tab === item ? "active" : ""} onClick={() => setTab(item)}>{item}{item === "Exercícios" && totalExercises > 0 && <i className="tab-count">{answered}/{totalExercises}</i>}</button>)}</div>
         <div className="detail-body" ref={contentRef}>{tab === "Conteúdo"
           ? <LessonContent text={data.conteudo} />
-          : <Quiz tutorialId={data.id} onAnswered={(count) => setAnswered((current) => Math.max(current, count))} />}
-          {/* Fim do conteúdo/exercícios: onde a pessoa termina, ela pode concluir */}
+          : <Quiz tutorialId={data.id} onAnswered={(exerciseId) => setAnsweredNow((current) => [...current, exerciseId])} />}
+          {/* Fim do conteúdo/exercícios: onde a pessoa termina, ela pode concluir (depois de fazer os exercícios) */}
           <div className={`lesson-finish ${done ? "done" : ""}`}>
             {done
               ? <><CircleCheck size={22} /><span><strong>Você concluiu este tutorial!</strong><small>Ele já conta no seu progresso e nas suas conquistas.</small></span>
                 <Link className="secondary-button" href="/tutoriais">Ver outros tutoriais</Link></>
-              : <><Sparkles size={22} /><span>
-                <strong>{tab === "Conteúdo" ? "Terminou a leitura?" : "Terminou os exercícios?"}</strong>
-                <small>{tab === "Conteúdo" && totalExercises > answered ? "Faça os exercícios para fixar o conteúdo e depois marque como concluído." : "Marque como concluído para ganhar 50 XP."}</small>
-              </span>
-                {tab === "Conteúdo" && totalExercises > answered && <button className="secondary-button" onClick={() => { setTab("Exercícios"); contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }}><ClipboardCheck size={16} /> Fazer exercícios</button>}
-                <button className="primary-button" disabled={saving || !progress.data} onClick={() => saveStatus("CONCLUIDO")}><CircleCheck size={16} /> {saving ? "Salvando..." : "Marcar como concluído"}</button></>}
+              : !canComplete
+                ? <><ClipboardCheck size={22} /><span>
+                  <strong>{tab === "Conteúdo" ? "Agora é hora de praticar!" : `Faltam ${pending} de ${totalExercises} exercícios`}</strong>
+                  <small>{tab === "Conteúdo" ? `Responda os exercícios (${answered}/${totalExercises}) para poder concluir este tutorial.` : "Responda todos para poder concluir este tutorial."}</small>
+                </span>
+                  {tab === "Conteúdo" && <button className="primary-button" onClick={goToExercises}><ClipboardCheck size={16} /> Fazer exercícios</button>}</>
+                : <><Sparkles size={22} /><span>
+                  <strong>{tab === "Conteúdo" ? "Terminou a leitura?" : "Exercícios feitos!"}</strong>
+                  <small>Marque como concluído para ganhar 50 XP.</small>
+                </span>
+                  <button className="primary-button" disabled={saving || !progress.data} onClick={() => saveStatus("CONCLUIDO")}><CircleCheck size={16} /> {saving ? "Salvando..." : "Marcar como concluído"}</button></>}
           </div>
         </div>
       </section>
@@ -140,10 +155,14 @@ export default function TutorialPage() {
           <p><Layers size={16} /><span><small>Pratique</small><button className="link-button" onClick={() => setTab("Exercícios")}><ClipboardCheck size={14} /> {totalExercises === 1 ? "Fazer o exercício" : totalExercises > 1 ? `Fazer os ${totalExercises} exercícios` : "Ver exercícios"}</button></span></p>
           <div className="learning-actions"><FavoriteButton tutorialId={data.id} /><span>Salvar nos favoritos</span></div>
         </div>
-        <button className={`complete-button ${done ? "done" : ""} ${readyToComplete ? "ready" : ""}`} disabled={saving || !progress.data} onClick={() => saveStatus(done ? "EM_ANDAMENTO" : "CONCLUIDO")}>
-          {readyToComplete ? <Sparkles size={20} /> : <CircleCheck size={20} />}
-          {saving ? "Salvando..." : done ? "Tutorial concluído" : readyToComplete ? "Tudo pronto! Marcar como concluído" : "Marcar como concluído"}
-        </button>
+        {!done && !canComplete
+          ? <button className="complete-button locked" onClick={goToExercises} disabled={!exercises.data || !myAnswers.data}>
+            <ClipboardCheck size={20} />{pendingText} ({answered}/{totalExercises})
+          </button>
+          : <button className={`complete-button ${done ? "done" : ""} ${readyToComplete ? "ready" : ""}`} disabled={saving || !progress.data} onClick={() => saveStatus(done ? "EM_ANDAMENTO" : "CONCLUIDO")}>
+            {readyToComplete ? <Sparkles size={20} /> : <CircleCheck size={20} />}
+            {saving ? "Salvando..." : done ? "Tutorial concluído" : readyToComplete ? "Tudo pronto! Marcar como concluído" : "Marcar como concluído"}
+          </button>}
         {error && <p className="login-error" role="alert">{error}</p>}
       </aside>
     </div>
