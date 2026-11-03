@@ -1,8 +1,8 @@
 "use client";
 
-import { BookOpenText, ChevronRight, CircleCheck, ClipboardCheck, Clock3, GraduationCap, Layers, RotateCcw, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, CircleCheck, ClipboardCheck, Clock3, GraduationCap, Layers, List, RotateCcw, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FavoriteButton, LessonContent, StatusChip } from "../../../components/content";
 import { Quiz } from "../../../components/Quiz";
@@ -26,11 +26,13 @@ export default function TutorialPage() {
   const { id } = useParams<{ id: string }>();
   // Trocar a key recria a tela: leitura, respostas e exercícios voltam ao zero depois de refazer.
   const [attempt, setAttempt] = useState(0);
-  return <TutorialView key={attempt} id={id} onRestarted={() => { setAttempt((value) => value + 1); notifyProgressChanged(); }} />;
+  return <TutorialView key={`${id}:${attempt}`} id={id} onRestarted={() => { setAttempt((value) => value + 1); notifyProgressChanged(); }} />;
 }
 
 function TutorialView({ id, onRestarted }: { id: string; onRestarted: () => void }) {
+  const router = useRouter();
   const tutorial = useApi<Tutorial>(`/api/tutoriais/${id}`);
+  const tutorials = useApi<Tutorial[]>("/api/tutoriais");
   const exercises = useApi<Exercicio[]>(`/api/exercicios?tutorialId=${id}`);
   const progress = useProgress();
   const [tab, setTab] = useState<(typeof tabs)[number]>("Conteúdo");
@@ -61,6 +63,21 @@ function TutorialView({ id, onRestarted }: { id: string; onRestarted: () => void
     : read * 100));
   const percent = done ? 100 : Math.max(saved?.percentual ?? 0, computed);
   const readyToComplete = !done && canComplete && computed >= 99;
+
+  const tutorialIndex = tutorials.data?.findIndex((item) => item.id === Number(id)) ?? -1;
+  const previousTutorial = tutorialIndex > 0 ? tutorials.data?.[tutorialIndex - 1] : undefined;
+  const nextTutorial = tutorialIndex >= 0 && tutorialIndex < (tutorials.data?.length ?? 0) - 1
+    ? tutorials.data?.[tutorialIndex + 1]
+    : undefined;
+
+  function goBack() {
+    // Mantém a sequência real de telas; em acesso direto, retorna para a lista de tutoriais.
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push("/tutoriais");
+  }
 
   async function saveStatus(next: StatusProgresso) {
     setSaving(true);
@@ -112,10 +129,13 @@ function TutorialView({ id, onRestarted }: { id: string; onRestarted: () => void
   const VisualIcon = visual.icon;
 
   return <div className="page-stack">
-    <nav className="breadcrumbs" aria-label="Você está em"><Link href="/tutoriais">Tutoriais</Link><ChevronRight size={14} />
-      {data.categoria && <><Link href={`/tutoriais?categoria=${encodeURIComponent(data.categoria)}`}>{data.categoria}</Link><ChevronRight size={14} /></>}
-      <strong>{data.titulo}</strong>
-    </nav>
+    <div className="tutorial-toolbar">
+      <button type="button" className="tutorial-back" onClick={goBack}><ArrowLeft size={16} /> Voltar</button>
+      <nav className="breadcrumbs" aria-label="Você está em"><Link href="/tutoriais">Tutoriais</Link><ChevronRight size={14} />
+        {data.categoria && <><Link href={`/tutoriais?categoria=${encodeURIComponent(data.categoria)}`}>{data.categoria}</Link><ChevronRight size={14} /></>}
+        <strong>{data.titulo}</strong>
+      </nav>
+    </div>
 
     <section className="tutorial-hero">
       <div>
@@ -140,7 +160,10 @@ function TutorialView({ id, onRestarted }: { id: string; onRestarted: () => void
           <div className={`lesson-finish ${done ? "done" : ""}`}>
             {done
               ? <><CircleCheck size={22} /><span><strong>Você concluiu este tutorial!</strong><small>Ele já conta no seu progresso e nas suas conquistas.</small></span>
-                <Link className="secondary-button" href="/tutoriais">Ver outros tutoriais</Link></>
+                <span className="lesson-finish-actions">
+                  <Link className="secondary-button" href="/tutoriais"><List size={16} /> Ver todos</Link>
+                  {nextTutorial && <Link className="primary-button" href={`/tutoriais/${nextTutorial.id}`}>Próximo tutorial <ArrowRight size={16} /></Link>}
+                </span></>
               : !canComplete
                 ? <><ClipboardCheck size={22} /><span>
                   <strong>{tab === "Conteúdo" ? "Agora é hora de praticar!" : `Faltam ${pending} de ${totalExercises} exercícios`}</strong>
@@ -176,6 +199,15 @@ function TutorialView({ id, onRestarted }: { id: string; onRestarted: () => void
         {error && <p className="login-error" role="alert">{error}</p>}
       </aside>
     </div>
+    {!tutorials.error && tutorials.data && <nav className="tutorial-pager" aria-label="Navegação entre tutoriais">
+      {previousTutorial
+        ? <Link href={`/tutoriais/${previousTutorial.id}`} className="tutorial-pager-link previous"><ChevronLeft size={18} /><span><small>Tutorial anterior</small><strong>{previousTutorial.titulo}</strong></span></Link>
+        : <span />}
+      <Link href="/tutoriais" className="tutorial-pager-all"><List size={16} /> Todos</Link>
+      {nextTutorial
+        ? <Link href={`/tutoriais/${nextTutorial.id}`} className="tutorial-pager-link next"><span><small>Próximo tutorial</small><strong>{nextTutorial.titulo}</strong></span><ChevronRight size={18} /></Link>
+        : <span />}
+    </nav>}
     {confirmRestart && <RestartTutorialDialog tutorialId={data.id} onClose={() => setConfirmRestart(false)} onRestarted={onRestarted} />}
   </div>;
 }

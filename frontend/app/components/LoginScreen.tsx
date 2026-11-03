@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowBigUp, ArrowRight, CircleAlert, Eye, EyeOff, Info, LockKeyhole, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowBigUp, ArrowRight, CircleAlert, Eye, EyeOff, LockKeyhole, ShieldCheck, UserRound } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { ApiError, apiFetch } from "../lib/api";
 import type { SessionUser } from "../lib/types";
+import { AccessRecoveryDialog } from "./AccessRecoveryDialog";
 import { LearningShowcase } from "./LearningShowcase";
 import { Brand } from "./ui";
 
@@ -96,9 +97,8 @@ export function LoginScreen({ onLogin }: { onLogin: (user: SessionUser) => void 
               <input id="remember" name="remember" type="checkbox" />
               <span>Lembrar de mim</span>
             </label>
-            <button className="link-button" type="button" onClick={() => setShowHelp((value) => !value)} aria-expanded={showHelp}>Esqueci minha senha</button>
+            <button className="link-button" type="button" onClick={() => setShowHelp(true)} aria-haspopup="dialog" aria-expanded={showHelp}>Esqueci minha senha</button>
           </div>
-          {showHelp && <p className="login-note"><Info size={17} /><span>Sua senha é a mesma usada para entrar no computador da rede. Para redefini-la, procure o suporte do NTI.</span></p>}
 
           {error && <p key={errorCount} className="login-error" role="alert"><CircleAlert size={17} /><span>{error}</span></p>}
 
@@ -112,5 +112,6 @@ export function LoginScreen({ onLogin }: { onLogin: (user: SessionUser) => void 
       <footer className="login-footer">© {new Date().getFullYear()} NTI Training · Portal interno de aprendizagem</footer>
     </section>
     <LearningShowcase />
+    {showHelp && <AccessRecoveryDialog onClose={() => setShowHelp(false)} />}
   </main>;
 }
