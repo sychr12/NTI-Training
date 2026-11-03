@@ -12,7 +12,6 @@ import com.tiaprende.backend.exercicio.dto.ExercicioRequest;
 import com.tiaprende.backend.exercicio.dto.MinhaRespostaResponse;
 import com.tiaprende.backend.exercicio.dto.ExercicioResponse;
 import com.tiaprende.backend.exercicio.dto.RespostaExercicioRequest;
-import com.tiaprende.backend.exercicio.dto.ResultadoExercicioResponse;
 import com.tiaprende.backend.exercicio.service.ExercicioService;
 import com.tiaprende.backend.login.session.AuthSession;
 
@@ -98,7 +97,7 @@ public class ExercicioController {
     }
 
     @PostMapping("/{id}/responder")
-    public ResultadoExercicioResponse responder(
+    public MinhaRespostaResponse responder(
             @AuthenticationPrincipal
             AuthSession.SessionUser usuario,
             @PathVariable Long id,

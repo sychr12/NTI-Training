@@ -4,7 +4,10 @@ import com.tiaprende.backend.tutorial.repository.TutorialRepository;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.tiaprende.backend.conquista.repository.DiaEstudoRepository;
 import com.tiaprende.backend.progresso.dto.AtualizarProgressoRequest;
@@ -99,6 +102,29 @@ public class ProgressoService {
         return ProgressoTutorialResponse.from(
                 progresso
         );
+    }
+
+    /*
+     * Refazer: progresso volta a 0% e as respostas do tutorial sao apagadas, para os exercicios
+     * valerem de novo. O XP do tutorial sai ate ele ser concluido outra vez; medalhas ja ganhas ficam.
+     */
+    @Transactional
+    public void refazer(
+            Long usuarioId,
+            Long tutorialId
+    ) {
+
+        tutorialRepository.findById(tutorialId)
+                .orElseThrow(() -> new com.tiaprende.backend.exception.ResourceNotFoundException("Tutorial nao encontrado."));
+
+        if (!progressoRepository.reiniciarConcluido(usuarioId, tutorialId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "So e possivel refazer um tutorial concluido."
+            );
+        }
+
+        progressoRepository.apagarRespostas(usuarioId, tutorialId);
     }
 
     private void validar(

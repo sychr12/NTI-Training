@@ -14,7 +14,6 @@ import com.tiaprende.backend.exercicio.dto.ExercicioRequest;
 import com.tiaprende.backend.exercicio.dto.MinhaRespostaResponse;
 import com.tiaprende.backend.exercicio.dto.ExercicioResponse;
 import com.tiaprende.backend.exercicio.dto.RespostaExercicioRequest;
-import com.tiaprende.backend.exercicio.dto.ResultadoExercicioResponse;
 import com.tiaprende.backend.exercicio.model.Exercicio;
 import com.tiaprende.backend.exercicio.repository.ExercicioRepository;
 
@@ -113,7 +112,11 @@ public class ExercicioService {
         return ExercicioResponse.from(exercicio);
     }
 
-    public ResultadoExercicioResponse responder(
+    /*
+     * Cada exercicio tem 2 tentativas. Errar a primeira nao revela o gabarito; acertar ou gastar as
+     * tentativas encerra o exercicio. Responder um exercicio encerrado nao muda nada e devolve o resultado salvo.
+     */
+    public MinhaRespostaResponse responder(
             Long usuarioId,
             Long id,
             RespostaExercicioRequest request
@@ -148,14 +151,16 @@ public class ExercicioService {
                         .respostaCorreta()
                         .equalsIgnoreCase(resposta);
 
-        exercicioRepository.salvarResposta(usuarioId, id, resposta, correto);
+        if (exercicioRepository.findResposta(usuarioId, id).isEmpty()) {
+            exercicioRepository.registrarPrimeiraTentativa(usuarioId, id, resposta, correto);
+        }
+        else {
+            exercicioRepository.registrarNovaTentativa(usuarioId, id, resposta, correto);
+        }
         diaEstudoRepository.registrarHoje(usuarioId);
 
-        return new ResultadoExercicioResponse(
-                correto,
-                exercicio.respostaCorreta(),
-                exercicio.explicacao()
-        );
+        // Le de novo: com requisicoes simultaneas, vale o que ficou gravado.
+        return exercicioRepository.findResposta(usuarioId, id).orElseThrow();
     }
 
     public void remover(Long id) {

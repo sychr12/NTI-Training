@@ -34,12 +34,20 @@ export function LoginScreen({ onLogin }: { onLogin: (user: SessionUser) => void 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setLoading(true);
 
     const formData = new FormData(event.currentTarget);
     const usuario = String(formData.get("username") ?? "");
     const senha = String(formData.get("password") ?? "");
     const lembrar = formData.get("remember") === "on";
+
+    // O servidor só aceita o usuário simples; avisa aqui para não gastar uma tentativa de login.
+    if (/[@\\]/.test(usuario)) {
+      setError("Informe só o usuário da rede, sem @domínio. Ex.: nome.sobrenome");
+      setErrorCount((value) => value + 1);
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const { usuario: user } = await apiFetch<{ usuario: SessionUser }>("/api/auth/login", {

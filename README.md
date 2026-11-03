@@ -7,16 +7,21 @@ Portal de treinamento interno com frontend em Next.js e backend em Spring Boot.
 Com o Docker instalado, na pasta raiz do projeto:
 
 ```powershell
+Copy-Item .env.example .env   # depois preencha NTI_PERFIL no .env
 docker compose up --build
 ```
 
 Isso sobe o PostgreSQL, o backend e o frontend de uma vez:
 
-- Site: `http://localhost:3000` (usuário `dev`, senha `dev123`)
+- Site: `http://localhost:3000`
 - API: `http://localhost:8080`
 
-Por padrão o backend usa o perfil `dev`: usuário local administrador e conteúdo de exemplo, sem precisar do AD.
-Para mudar portas, senha do banco ou entrar pelo Active Directory, copie `.env.example` para `.env` e ajuste.
+`NTI_PERFIL` é obrigatório e o compose não sobe sem ele:
+
+- `dev`: usuário local `dev`, senha `dev123` (administrador) e conteúdo de exemplo, sem precisar do AD. Nunca use em produção.
+- `default`: login pelo Active Directory (precisa estar na rede do IDAM).
+
+Portas e senha do banco também ficam no `.env`.
 Depois de mudar `BACKEND_PORT`, rode com `--build` de novo, pois o endereço da API vai para o build do frontend.
 
 ```powershell
@@ -80,8 +85,10 @@ cd backend
 .\run-local.ps1
 ```
 
-Na tela de login, informe o usuario da rede e a senha pessoal do Windows/AD. A aplicacao faz
-o bind com `usuario@idam.am.gov.br` e usa a mesma conexao autenticada para consultar atributos e grupos.
+Na tela de login, informe somente o usuario da rede (sem `@dominio` nem `DOMINIO\`) e a senha pessoal do
+Windows/AD. A aplicacao faz o bind com `usuario@idam.am.gov.br` e usa a mesma conexao autenticada para consultar
+atributos e grupos. Se o nome digitado for o UPN de uma conta e o `sAMAccountName` de outra, o login e recusado
+com erro 503 e um aviso no log do backend, pois nao ha como saber quem autenticou.
 
 Opcionalmente:
 
@@ -124,8 +131,15 @@ no primeiro acesso.
 
 - **Progresso parcial**: ao ler o tutorial (cada bloco conta depois de 1,2 s visivel) e responder os exercicios,
   o progresso sobe ate 99% (70% leitura + 30% exercicios, quando o tutorial tem exercicios). Concluir grava 100%.
-  O servidor nunca diminui o valor (`PUT /api/progresso` com `percentual`).
-- **Conquistas** (`GET /api/conquistas`): XP (50 por tutorial concluido, 10 por exercicio acertado, 100 por trilha
+  O servidor nunca diminui o valor (`PUT /api/progresso` com `percentual`), e um tutorial concluido nao volta para
+  "em andamento" por esse caminho.
+- **Refazer tutorial**: em um tutorial concluido, o botao **Refazer tutorial** pede confirmacao e chama
+  `POST /api/progresso/{tutorialId}/refazer`. O progresso volta a 0% e as respostas daquele tutorial sao apagadas;
+  o XP dele sai ate a nova conclusao, e as medalhas ja ganhas continuam.
+- **Tentativas nos exercicios**: cada exercicio tem 2 tentativas. Errar a primeira nao revela o gabarito: o servidor
+  so envia a resposta certa e a explicacao quando o exercicio esta encerrado (acertou ou gastou as tentativas).
+  Questoes erradas nao impedem concluir o tutorial.
+- **Conquistas** (`GET /api/conquistas`): XP (50 por tutorial concluido, 10 por exercicio acertado de primeira e 5 na segunda tentativa, 100 por trilha
   completa), nivel (Iniciante, Aprendiz, Explorador, Especialista, Mestre), sequencia de dias de estudo e 7 medalhas.
   Medalhas novas aparecem uma unica vez em um aviso animado (`POST /api/conquistas/vistas`).
 

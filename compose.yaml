@@ -1,8 +1,8 @@
 # Sobe o projeto inteiro: banco, backend e frontend.
-#   docker compose up --build
+#   copie .env.example para .env, escolha o NTI_PERFIL e rode: docker compose up --build
 # Site em http://localhost:3000 e API em http://localhost:8080.
-# Por padrão usa o perfil "dev" (usuário dev / dev123 e conteúdo de exemplo).
-# Para entrar pelo Active Directory, veja o .env.example.
+# O perfil não tem valor padrão de propósito: "dev" cria um administrador com senha conhecida (dev / dev123)
+# e não pode entrar no ar por esquecimento.
 
 name: nti-training
 
@@ -28,7 +28,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: ${NTI_PERFIL:-dev}
+      SPRING_PROFILES_ACTIVE: ${NTI_PERFIL:?Defina NTI_PERFIL no arquivo .env (dev ou default). Veja o .env.example}
       # O banco já vem deste compose; o Spring não deve tentar subir outro
       SPRING_DOCKER_COMPOSE_ENABLED: "false"
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/nti_training

@@ -2,6 +2,7 @@ package com.tiaprende.backend.progresso.controller;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -63,5 +64,27 @@ public class ProgressoController {
                 usuario.id(),
                 request
         );
+    }
+
+    /*
+     * POST /api/progresso/1/refazer
+     */
+    @PostMapping("/{tutorialId}/refazer")
+    public ResponseEntity<Void> refazer(
+            Authentication authentication,
+            @PathVariable Long tutorialId
+    ) {
+
+        SessionUser usuario =
+                (SessionUser) authentication.getPrincipal();
+
+        progressoService.refazer(
+                usuario.id(),
+                tutorialId
+        );
+
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 }

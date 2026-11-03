@@ -54,6 +54,8 @@ public class ProgressoRepository {
     /*
      * percentual: progresso parcial enviado pelo frontend (0-99) ou null para manter o atual.
      * CONCLUIDO sempre vira 100; EM_ANDAMENTO fica entre 0 e 99 e nunca diminui.
+     * Concluido nao volta atras: um envio atrasado ou de outra aba nao desfaz a conclusao nem a data.
+     * A unica forma de voltar e o pedido explicito de refazer (reiniciarConcluido).
      */
     public ProgressoTutorial saveOrUpdate(
             Long usuarioId,
@@ -93,11 +95,17 @@ public class ProgressoRepository {
 
                 DO UPDATE SET
 
-                    status = EXCLUDED.status,
+                    status =
+                        CASE
+                            WHEN progresso_tutoriais.status = 'CONCLUIDO'
+                            THEN 'CONCLUIDO'
+                            ELSE EXCLUDED.status
+                        END,
 
                     percentual =
                         CASE
-                            WHEN EXCLUDED.status = 'CONCLUIDO'
+                            WHEN progresso_tutoriais.status = 'CONCLUIDO'
+                              OR EXCLUDED.status = 'CONCLUIDO'
                             THEN 100
                             ELSE GREATEST(
                                 LEAST(progresso_tutoriais.percentual, 99),
@@ -113,7 +121,8 @@ public class ProgressoRepository {
 
                     concluido_em =
                         CASE
-                            WHEN EXCLUDED.status = 'CONCLUIDO'
+                            WHEN progresso_tutoriais.status = 'CONCLUIDO'
+                              OR EXCLUDED.status = 'CONCLUIDO'
                             THEN COALESCE(
                                 progresso_tutoriais.concluido_em,
                                 CURRENT_TIMESTAMP
@@ -121,7 +130,13 @@ public class ProgressoRepository {
                             ELSE NULL
                         END,
 
-                    atualizado_em = CURRENT_TIMESTAMP
+                    atualizado_em =
+                        CASE
+                            WHEN progresso_tutoriais.status = 'CONCLUIDO'
+                              AND EXCLUDED.status <> 'CONCLUIDO'
+                            THEN progresso_tutoriais.atualizado_em
+                            ELSE CURRENT_TIMESTAMP
+                        END
 
                 RETURNING
                     id,
@@ -139,6 +154,43 @@ public class ProgressoRepository {
                 .param("percentual", percentual)
                 .query(this::mapProgresso)
                 .single();
+    }
+
+    /*
+     * Volta um tutorial concluido para o inicio. Devolve false se ele nao estava concluido.
+     */
+    public boolean reiniciarConcluido(
+            Long usuarioId,
+            Long tutorialId) {
+
+        return jdbcClient.sql("""
+                UPDATE progresso_tutoriais
+                SET
+                    status = 'EM_ANDAMENTO',
+                    percentual = 0,
+                    concluido_em = NULL,
+                    atualizado_em = CURRENT_TIMESTAMP
+                WHERE usuario_id = :usuarioId
+                  AND tutorial_id = :tutorialId
+                  AND status = 'CONCLUIDO'
+                """)
+                .param("usuarioId", usuarioId)
+                .param("tutorialId", tutorialId)
+                .update() > 0;
+    }
+
+    public void apagarRespostas(
+            Long usuarioId,
+            Long tutorialId) {
+
+        jdbcClient.sql("""
+                DELETE FROM respostas_exercicios
+                WHERE usuario_id = :usuarioId
+                  AND exercicio_id IN (SELECT id FROM exercicios WHERE tutorial_id = :tutorialId)
+                """)
+                .param("usuarioId", usuarioId)
+                .param("tutorialId", tutorialId)
+                .update();
     }
 
     public List<ProgressoTrilhaResponse> findProgressoTrilhas(

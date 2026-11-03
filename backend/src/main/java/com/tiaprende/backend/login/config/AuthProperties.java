@@ -12,6 +12,10 @@ public record AuthProperties(
     Login login
 ) {
 
+    // {0} = nome de usuario; {1} = UPN usado no bind (usuario@dominio).
+    static final String DEFAULT_USER_SEARCH_FILTER =
+            "(&(objectCategory=person)(objectClass=user)(|(sAMAccountName={0})(userPrincipalName={1})))";
+
     public AuthProperties{
         if (cors == null){
             cors = new Cors(
@@ -29,7 +33,7 @@ public record AuthProperties(
             "",
             "",
             "",
-            "(&(objectCategory=person)(objectClass=user)(sAMAccountName={0}))",
+            DEFAULT_USER_SEARCH_FILTER,
             List.of(),
             false,
             0,
@@ -79,7 +83,7 @@ public record AuthProperties(
             baseDn = baseDn == null ? "" : baseDn;
 
             userSearchFilter = userSearchFilter == null || userSearchFilter.isBlank()
-                    ? "(&(objectCategory=person)(objectClass=user)(sAMAccountName={0}))"
+                    ? DEFAULT_USER_SEARCH_FILTER
                     : userSearchFilter;
             allowedGroups = allowedGroups == null
                     ? List.of()

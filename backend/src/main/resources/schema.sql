@@ -120,6 +120,13 @@ CREATE TABLE IF NOT EXISTS dias_estudo (
     PRIMARY KEY (usuario_id, dia)
 );
 
+-- Tentativas em cada exercicio (maximo 2). Nas respostas antigas, quem acertou fica com 1 tentativa e mantem os 10 XP.
+-- Quem errou ja tinha visto o gabarito, entao o exercicio fica encerrado.
+ALTER TABLE respostas_exercicios ADD COLUMN IF NOT EXISTS tentativas INTEGER;
+UPDATE respostas_exercicios SET tentativas = CASE WHEN correto THEN 1 ELSE 2 END WHERE tentativas IS NULL;
+ALTER TABLE respostas_exercicios ALTER COLUMN tentativas SET DEFAULT 1;
+ALTER TABLE respostas_exercicios ALTER COLUMN tentativas SET NOT NULL;
+
 -- Medalhas ja conquistadas; "vista" controla o aviso de nova conquista no frontend.
 CREATE TABLE IF NOT EXISTS conquistas_usuarios (
     usuario_id BIGINT NOT NULL REFERENCES usuarios(id),

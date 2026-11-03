@@ -525,6 +525,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(11, 111, 251
 .learning-card .link-button { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; }
 .learning-actions { margin-top: 14px; padding-top: 12px; display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; border-top: 1px solid var(--line-soft); }
 .complete-button:disabled { opacity: .7; cursor: wait; }
+.complete-button.done:disabled { opacity: 1; cursor: default; }
+.restart-button { width: 100%; justify-content: center; }
+.modal-body > .restart-error { margin-top: 16px; }
 
 /* Quiz */
 .quiz { display: flex; flex-direction: column; gap: 16px; }
@@ -544,6 +547,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(11, 111, 251
 .quiz-feedback { margin: 10px 0 0; display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border-radius: 10px; font-size: 12px; line-height: 1.5; }
 .quiz-feedback.correct { color: var(--success-ink); background: var(--success-soft); }
 .quiz-feedback.wrong { color: var(--danger); background: var(--danger-soft); }
+.quiz-feedback.hint { color: var(--blue); background: var(--blue-soft); }
+.quiz-retry { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.quiz-option:disabled { cursor: not-allowed; }
 .quiz-feedback span { color: var(--text-2); }
 .quiz-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border: 1px solid var(--blue-line); border-radius: 10px; background: var(--blue-surface); font-size: 13px; }
 
@@ -735,6 +741,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(11, 111, 251
 .modal-steps { margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; list-style: none; counter-reset: step; }
 .modal-steps li { counter-increment: step; display: flex; align-items: flex-start; gap: 10px; color: var(--text-2); font-size: 13px; line-height: 1.5; }
 .modal-steps li::before { content: counter(step); width: 22px; height: 22px; display: grid; place-items: center; flex: 0 0 auto; color: #fff; background: var(--blue); border-radius: 50%; font-size: 11px; font-weight: 800; }
+.modal-notes li::before { content: ""; width: 6px; height: 6px; margin: 7px 2px 0; background: var(--muted); }
 .modal-body > .modal-tip { margin-top: 16px; display: flex; align-items: flex-start; gap: 9px; padding: 11px 12px; color: var(--success-ink); background: var(--success-soft); border-radius: 10px; font-size: 12px; font-weight: 600; line-height: 1.5; }
 .modal-tip svg { flex: 0 0 auto; margin-top: 1px; }
 .modal-actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }

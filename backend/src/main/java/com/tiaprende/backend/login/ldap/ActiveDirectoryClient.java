@@ -7,6 +7,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import javax.naming.AuthenticationException;
 import javax.naming.Context;
@@ -41,6 +42,9 @@ public class ActiveDirectoryClient implements DirectoryAuthenticator {
 			"distinguishedName", "sAMAccountName", "displayName", "mail", "objectGUID", "memberOf"
 	};
 
+	// Caracteres que o AD proibe no sAMAccountName, mais "@", chaves e caracteres de controle.
+	private static final Pattern PLAIN_ACCOUNT_NAME = Pattern.compile("[^\"/\\\\\\[\\]:;|=,+*?<>@{}\\p{Cntrl}]+");
+
 	private final AuthProperties properties;
 
 	public ActiveDirectoryClient(AuthProperties properties) {
@@ -53,12 +57,20 @@ public class ActiveDirectoryClient implements DirectoryAuthenticator {
 			throw new InvalidCredentialsException();
 		}
 
+		// So o nome de usuario simples chega ao AD: outros formatos (usuario@dominio, DOMINIO\\usuario, DN)
+		// autenticariam em um dominio ou conta diferente da que a busca abaixo encontra.
+		String account = username.trim();
+		if (!isPlainAccountName(account)) {
+			throw new InvalidCredentialsException();
+		}
+
 		AuthProperties.ActiveDirectory ad = requireAdConfig();
 		DirContext context = null;
 		try {
-			context = bind(ad, userPrincipal(ad.domain(), username), password);
-			SearchResult userResult = findUser(ad, context, username);
-			AdUser user = mapUser(userResult.getAttributes(), username);
+			String principal = userPrincipal(ad.domain(), account);
+			context = bind(ad, principal, password);
+			SearchResult userResult = findUser(ad, context, account, principal);
+			AdUser user = mapUser(userResult.getAttributes(), account);
 			ensureAuthorized(ad.allowedGroups(), user.memberOf());
 			return user;
 		}
@@ -82,14 +94,20 @@ public class ActiveDirectoryClient implements DirectoryAuthenticator {
 		}
 	}
 
-	private SearchResult findUser(AuthProperties.ActiveDirectory ad, DirContext context, String username)
+	/*
+	 * Busca pelo sAMAccountName e tambem pelo UPN usado no bind. O AD pode autenticar "joao@dominio" como a conta
+	 * cujo UPN e esse, enquanto outra pessoa tem o sAMAccountName "joao". Se as duas existirem, nao ha como saber
+	 * quem autenticou: a busca devolve duas contas e o login e recusado, em vez de entrar como a pessoa errada.
+	 */
+	private SearchResult findUser(AuthProperties.ActiveDirectory ad, DirContext context, String account, String principal)
 			throws NamingException {
 		SearchControls controls = new SearchControls();
 		controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 		controls.setReturningAttributes(RETURNING_ATTRIBUTES);
 
-		String accountName = username.contains("@") ? username.substring(0, username.indexOf('@')) : username;
-		String filter = ad.userSearchFilter().replace("{0}", escapeLdapFilter(accountName));
+		String filter = ad.userSearchFilter()
+				.replace("{0}", escapeLdapFilter(account))
+				.replace("{1}", escapeLdapFilter(principal));
 		NamingEnumeration<SearchResult> results = context.search(ad.baseDn(), filter, controls);
 		SearchResult result = null;
 		try {
@@ -98,6 +116,7 @@ public class ActiveDirectoryClient implements DirectoryAuthenticator {
 					result = results.next();
 				}
 				if (result != null && results.hasMore()) {
+					LOGGER.warn("Login recusado: '{}' corresponde a mais de uma conta no Active Directory.", account);
 					throw new AuthConfigurationException("A busca no AD retornou mais de um usuario.");
 				}
 			}
@@ -117,14 +136,16 @@ public class ActiveDirectoryClient implements DirectoryAuthenticator {
 		}
 	}
 
-	static String userPrincipal(String domain, String username) {
-		String normalized = username.trim();
-		return normalized.contains("@") || normalized.indexOf(92) >= 0
-				? normalized
-				: normalized + "@" + domain;
+	static boolean isPlainAccountName(String account) {
+		return PLAIN_ACCOUNT_NAME.matcher(account).matches();
 	}
 
-	private DirContext bind(AuthProperties.ActiveDirectory ad, String principal, String credentials) throws NamingException {
+	static String userPrincipal(String domain, String account) {
+		return account + "@" + domain;
+	}
+
+	// Sem "private" para os testes substituirem a conexao real com o AD.
+	DirContext bind(AuthProperties.ActiveDirectory ad, String principal, String credentials) throws NamingException {
 		Hashtable<String, String> environment = new Hashtable<>();
 		environment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
 		environment.put(Context.PROVIDER_URL, ad.url());

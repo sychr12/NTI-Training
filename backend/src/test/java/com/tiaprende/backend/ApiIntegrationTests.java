@@ -146,12 +146,142 @@ class ApiIntegrationTests {
         mvc.perform(get("/api/exercicios/minhas-respostas?tutorialId=9001").session(session))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
 
-        jdbc.sql("INSERT INTO respostas_exercicios (usuario_id, exercicio_id, resposta, correto) VALUES (9001, 9003, 'A', FALSE)").update();
+        jdbc.sql("INSERT INTO respostas_exercicios (usuario_id, exercicio_id, resposta, correto, tentativas) VALUES (9001, 9003, 'A', FALSE, 2)").update();
         mvc.perform(get("/api/exercicios/minhas-respostas?tutorialId=9001").session(session))
                 .andExpect(jsonPath("$[0].exercicioId").value(9003))
                 .andExpect(jsonPath("$[0].resposta").value("A"))
                 .andExpect(jsonPath("$[0].correto").value(false))
                 .andExpect(jsonPath("$[0].respostaCorreta").value("B"));
+    }
+
+    private void exercicioComGabaritoB() {
+        jdbc.sql("INSERT INTO exercicios (id, tutorial_id, pergunta, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, explicacao) VALUES (9003, 9001, 'P', 'A', 'B', 'C', 'D', 'B', 'Porque B')").update();
+    }
+
+    private org.springframework.test.web.servlet.ResultActions responder(MockHttpSession session, String letra) throws Exception {
+        return mvc.perform(post("/api/exercicios/9003/responder").session(session).contentType("application/json")
+                .content("{\"resposta\":\"" + letra + "\"}")).andExpect(status().isOk());
+    }
+
+    @Test
+    void firstWrongAnswerNeverRevealsTheAnswerKey() throws Exception {
+        exercicioComGabaritoB();
+        var session = session("ALUNO");
+        responder(session, "A")
+                .andExpect(jsonPath("$.correto").value(false))
+                .andExpect(jsonPath("$.encerrada").value(false))
+                .andExpect(jsonPath("$.tentativas").value(1))
+                .andExpect(jsonPath("$.respostaCorreta").doesNotExist())
+                .andExpect(jsonPath("$.explicacao").doesNotExist());
+        // Nem voltando depois ao tutorial.
+        mvc.perform(get("/api/exercicios/minhas-respostas?tutorialId=9001").session(session))
+                .andExpect(jsonPath("$[0].resposta").value("A"))
+                .andExpect(jsonPath("$[0].encerrada").value(false))
+                .andExpect(jsonPath("$[0].respostaCorreta").doesNotExist())
+                .andExpect(jsonPath("$[0].explicacao").doesNotExist());
+    }
+
+    @Test
+    void secondWrongAnswerClosesTheExerciseWithoutXpAndRevealsTheAnswerKey() throws Exception {
+        exercicioComGabaritoB();
+        var session = session("ALUNO");
+        responder(session, "A");
+        responder(session, "C")
+                .andExpect(jsonPath("$.encerrada").value(true))
+                .andExpect(jsonPath("$.tentativas").value(2))
+                .andExpect(jsonPath("$.respostaCorreta").value("B"))
+                .andExpect(jsonPath("$.explicacao").value("Porque B"));
+        // Agora que sabe a resposta, responder de novo nao muda nada.
+        responder(session, "B")
+                .andExpect(jsonPath("$.correto").value(false))
+                .andExpect(jsonPath("$.resposta").value("C"))
+                .andExpect(jsonPath("$.tentativas").value(2));
+        mvc.perform(get("/api/conquistas").session(session)).andExpect(jsonPath("$.xp").value(0));
+    }
+
+    @Test
+    void correctOnSecondAttemptIsWorthFiveXp() throws Exception {
+        exercicioComGabaritoB();
+        var session = session("ALUNO");
+        responder(session, "A");
+        responder(session, "B")
+                .andExpect(jsonPath("$.correto").value(true))
+                .andExpect(jsonPath("$.encerrada").value(true))
+                .andExpect(jsonPath("$.tentativas").value(2))
+                .andExpect(jsonPath("$.explicacao").value("Porque B"));
+        mvc.perform(get("/api/conquistas").session(session)).andExpect(jsonPath("$.xp").value(5));
+    }
+
+    @Test
+    void correctOnFirstAttemptIsWorthTenXpAndCannotBeOverwritten() throws Exception {
+        exercicioComGabaritoB();
+        var session = session("ALUNO");
+        responder(session, "B")
+                .andExpect(jsonPath("$.correto").value(true))
+                .andExpect(jsonPath("$.encerrada").value(true))
+                .andExpect(jsonPath("$.tentativas").value(1));
+        responder(session, "A")
+                .andExpect(jsonPath("$.correto").value(true))
+                .andExpect(jsonPath("$.resposta").value("B"))
+                .andExpect(jsonPath("$.tentativas").value(1));
+        mvc.perform(get("/api/conquistas").session(session)).andExpect(jsonPath("$.xp").value(10));
+    }
+
+    @Test
+    void attemptsAreCountedPerUser() throws Exception {
+        exercicioComGabaritoB();
+        jdbc.sql("INSERT INTO usuarios (id, ad_object_guid, login, nome, perfil) VALUES (9002, 'other-guid', 'outro', 'Outro', 'ALUNO')").update();
+        jdbc.sql("INSERT INTO respostas_exercicios (usuario_id, exercicio_id, resposta, correto, tentativas) VALUES (9002, 9003, 'A', FALSE, 2)").update();
+        responder(session("ALUNO"), "A")
+                .andExpect(jsonPath("$.tentativas").value(1))
+                .andExpect(jsonPath("$.encerrada").value(false));
+    }
+
+    @Test
+    void redoingResetsOnlyThisUsersTutorialAndRequiresAnsweringAgain() throws Exception {
+        jdbc.sql("INSERT INTO usuarios (id, ad_object_guid, login, nome, perfil) VALUES (9002, 'other-guid', 'outro', 'Outro', 'ALUNO')").update();
+        jdbc.sql("INSERT INTO exercicios (id, tutorial_id, pergunta, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta) VALUES (9003, 9001, 'P', 'A', 'B', 'C', 'D', 'B'), (9004, 9002, 'P', 'A', 'B', 'C', 'D', 'B')").update();
+        jdbc.sql("INSERT INTO progresso_tutoriais (usuario_id, tutorial_id, status, percentual, concluido_em) VALUES (9001, 9001, 'CONCLUIDO', 100, CURRENT_TIMESTAMP), (9002, 9001, 'CONCLUIDO', 100, CURRENT_TIMESTAMP)").update();
+        jdbc.sql("INSERT INTO respostas_exercicios (usuario_id, exercicio_id, resposta, correto) VALUES (9001, 9003, 'B', TRUE), (9001, 9004, 'B', TRUE), (9002, 9003, 'B', TRUE)").update();
+        var session = session("ALUNO");
+        mvc.perform(get("/api/conquistas").session(session)).andExpect(jsonPath("$.xp").value(70));
+
+        mvc.perform(post("/api/progresso/9001/refazer")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/progresso/9001/refazer").session(session)).andExpect(status().isNoContent());
+
+        var row = jdbc.sql("SELECT status, percentual, concluido_em FROM progresso_tutoriais WHERE usuario_id = 9001 AND tutorial_id = 9001").query().singleRow();
+        org.junit.jupiter.api.Assertions.assertEquals("EM_ANDAMENTO", row.get("status"));
+        org.junit.jupiter.api.Assertions.assertEquals(0, row.get("percentual"));
+        org.junit.jupiter.api.Assertions.assertNull(row.get("concluido_em"));
+        // Sobraram a resposta de outro tutorial e a de outro usuario, e o tutorial do outro usuario segue concluido.
+        org.junit.jupiter.api.Assertions.assertEquals(2, jdbc.sql("SELECT COUNT(*) FROM respostas_exercicios").query(Integer.class).single());
+        org.junit.jupiter.api.Assertions.assertEquals(0, jdbc.sql("SELECT COUNT(*) FROM respostas_exercicios WHERE usuario_id = 9001 AND exercicio_id = 9003").query(Integer.class).single());
+        org.junit.jupiter.api.Assertions.assertEquals("CONCLUIDO", jdbc.sql("SELECT status FROM progresso_tutoriais WHERE usuario_id = 9002").query(String.class).single());
+
+        // Perde o XP do tutorial e da resposta apagada, mas a medalha ja ganha fica.
+        mvc.perform(get("/api/conquistas").session(session))
+                .andExpect(jsonPath("$.xp").value(10))
+                .andExpect(jsonPath("$.medalhas[?(@.codigo == 'primeiro-passo')].conquistada").value(true));
+
+        // Para concluir de novo, precisa responder de novo.
+        mvc.perform(put("/api/progresso").session(session).contentType("application/json")
+                .content("{\"tutorialId\":9001,\"status\":\"CONCLUIDO\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void onlyACompletedActiveTutorialCanBeRedone() throws Exception {
+        var session = session("ALUNO");
+        // Nunca iniciado.
+        mvc.perform(post("/api/progresso/9001/refazer").session(session)).andExpect(status().isConflict());
+        // Em andamento: nao mexe no que ja foi feito.
+        jdbc.sql("INSERT INTO progresso_tutoriais (usuario_id, tutorial_id, status, percentual) VALUES (9001, 9001, 'EM_ANDAMENTO', 40)").update();
+        mvc.perform(post("/api/progresso/9001/refazer").session(session)).andExpect(status().isConflict());
+        org.junit.jupiter.api.Assertions.assertEquals(40, jdbc.sql("SELECT percentual FROM progresso_tutoriais WHERE usuario_id = 9001").query(Integer.class).single());
+        // Inexistente ou removido.
+        mvc.perform(post("/api/progresso/123456/refazer").session(session)).andExpect(status().isNotFound());
+        jdbc.sql("UPDATE tutoriais SET ativo = FALSE WHERE id = 9002").update();
+        mvc.perform(post("/api/progresso/9002/refazer").session(session)).andExpect(status().isNotFound());
     }
 
     @Test

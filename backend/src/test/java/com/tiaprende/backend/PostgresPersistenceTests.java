@@ -99,7 +99,7 @@ class PostgresPersistenceTests {
     }
 
     @Test
-    void progressUpsertPreservesStartAndCompletionAndCanReopen() {
+    void progressUpsertPreservesStartAndCompletion() {
         var user = users.upsertFromAd(new AdUser("progress-guid", "login", "Nome", null, List.of()));
         var tutorial = tutorials.save(tutorial("Progresso"));
         var started = progress.saveOrUpdate(user.id(), tutorial.id(), "EM_ANDAMENTO");
@@ -109,8 +109,20 @@ class PostgresPersistenceTests {
         assertEquals(started.iniciadoEm(), done.iniciadoEm());
         assertNotNull(done.concluidoEm());
         assertEquals(done.concluidoEm(), repeated.concluidoEm());
-        assertNull(progress.saveOrUpdate(user.id(), tutorial.id(), "EM_ANDAMENTO").concluidoEm());
         assertEquals(1, progress.findByUsuario(user.id()).size());
+    }
+
+    @Test
+    void lateProgressUpdateDoesNotUndoCompletion() {
+        var user = users.upsertFromAd(new AdUser("late-guid", "login", "Nome", null, List.of()));
+        var tutorial = tutorials.save(tutorial("Atrasado"));
+        var done = progress.saveOrUpdate(user.id(), tutorial.id(), "CONCLUIDO");
+        // Envio atrasado da leitura ou de outra aba aberta: chega depois de concluir.
+        var late = progress.saveOrUpdate(user.id(), tutorial.id(), "EM_ANDAMENTO", 99);
+        assertEquals("CONCLUIDO", late.status());
+        assertEquals(100, late.percentual());
+        assertEquals(done.concluidoEm(), late.concluidoEm());
+        assertEquals(done.atualizadoEm(), late.atualizadoEm());
     }
 
     @Test
@@ -121,8 +133,7 @@ class PostgresPersistenceTests {
         assertEquals(40, progress.saveOrUpdate(user.id(), tutorial.id(), "EM_ANDAMENTO", 10).percentual());
         assertEquals(40, progress.saveOrUpdate(user.id(), tutorial.id(), "EM_ANDAMENTO").percentual());
         assertEquals(100, progress.saveOrUpdate(user.id(), tutorial.id(), "CONCLUIDO", 50).percentual());
-        // Reabrir um tutorial concluido volta para 99%, sem perder o que ja foi lido.
-        assertEquals(99, progress.saveOrUpdate(user.id(), tutorial.id(), "EM_ANDAMENTO").percentual());
+        assertEquals(100, progress.saveOrUpdate(user.id(), tutorial.id(), "EM_ANDAMENTO").percentual());
     }
 
     @Test

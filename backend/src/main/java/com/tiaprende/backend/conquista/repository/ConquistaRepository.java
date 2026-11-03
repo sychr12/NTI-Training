@@ -24,7 +24,7 @@ public class ConquistaRepository {
     /*
      * Numeros usados para calcular XP e medalhas, sempre considerando so conteudo ativo.
      */
-    public record Totais(int tutoriaisConcluidos, int categoriasConcluidas, int acertos) {
+    public record Totais(int tutoriaisConcluidos, int categoriasConcluidas, int acertos, int acertosNaSegundaTentativa) {
     }
 
     public Totais totais(Long usuarioId) {
@@ -40,10 +40,15 @@ public class ConquistaRepository {
                     (SELECT COUNT(*) FROM respostas_exercicios r
                        JOIN exercicios e ON e.id = r.exercicio_id AND e.ativo = TRUE
                        JOIN tutoriais t ON t.id = e.tutorial_id AND t.ativo = TRUE
-                      WHERE r.usuario_id = :usuarioId AND r.correto = TRUE) AS acertos
+                      WHERE r.usuario_id = :usuarioId AND r.correto = TRUE) AS acertos,
+                    (SELECT COUNT(*) FROM respostas_exercicios r
+                       JOIN exercicios e ON e.id = r.exercicio_id AND e.ativo = TRUE
+                       JOIN tutoriais t ON t.id = e.tutorial_id AND t.ativo = TRUE
+                      WHERE r.usuario_id = :usuarioId AND r.correto = TRUE AND r.tentativas > 1) AS acertos_segunda
                 """)
                 .param("usuarioId", usuarioId)
-                .query((rs, row) -> new Totais(rs.getInt("concluidos"), rs.getInt("categorias"), rs.getInt("acertos")))
+                .query((rs, row) -> new Totais(rs.getInt("concluidos"), rs.getInt("categorias"), rs.getInt("acertos"),
+                        rs.getInt("acertos_segunda")))
                 .single();
     }
 

@@ -24,6 +24,7 @@ public class ConquistaService {
     // Pontuacao de cada atividade.
     static final int XP_TUTORIAL = 50;
     static final int XP_ACERTO = 10;
+    static final int XP_ACERTO_SEGUNDA_TENTATIVA = 5;
     static final int XP_TRILHA = 100;
 
     record NivelDef(String nome, int xpMinimo) {
@@ -79,7 +80,9 @@ public class ConquistaService {
 
         Metricas metricas = new Metricas(totais.tutoriaisConcluidos(), totais.categoriasConcluidas(),
                 totais.acertos(), trilhas, sequencia.melhor());
-        int xp = totais.tutoriaisConcluidos() * XP_TUTORIAL + totais.acertos() * XP_ACERTO + trilhas * XP_TRILHA;
+        int xpExercicios = (totais.acertos() - totais.acertosNaSegundaTentativa()) * XP_ACERTO
+                + totais.acertosNaSegundaTentativa() * XP_ACERTO_SEGUNDA_TENTATIVA;
+        int xp = totais.tutoriaisConcluidos() * XP_TUTORIAL + xpExercicios + trilhas * XP_TRILHA;
 
         Map<String, Registro> registros = conquistaRepository.findByUsuario(usuarioId);
         boolean registrouNova = false;

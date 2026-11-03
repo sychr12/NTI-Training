@@ -1,11 +1,12 @@
 "use client";
 
-import { BookOpenText, ChevronRight, CircleCheck, ClipboardCheck, Clock3, GraduationCap, Layers, Sparkles } from "lucide-react";
+import { BookOpenText, ChevronRight, CircleCheck, ClipboardCheck, Clock3, GraduationCap, Layers, RotateCcw, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FavoriteButton, LessonContent, StatusChip } from "../../../components/content";
 import { Quiz } from "../../../components/Quiz";
+import { RestartTutorialDialog } from "../../../components/RestartTutorialDialog";
 import { EmptyState, ErrorState, IconBadge, LoadingState, ProgressTrack } from "../../../components/ui";
 import { ApiError, apiFetch, notifyProgressChanged, useApi } from "../../../lib/api";
 import { categoryVisual, levelLabel, readingTime } from "../../../lib/catalog";
@@ -23,12 +24,19 @@ const SEND_STEP = 5;
 
 export default function TutorialPage() {
   const { id } = useParams<{ id: string }>();
+  // Trocar a key recria a tela: leitura, respostas e exercícios voltam ao zero depois de refazer.
+  const [attempt, setAttempt] = useState(0);
+  return <TutorialView key={attempt} id={id} onRestarted={() => { setAttempt((value) => value + 1); notifyProgressChanged(); }} />;
+}
+
+function TutorialView({ id, onRestarted }: { id: string; onRestarted: () => void }) {
   const tutorial = useApi<Tutorial>(`/api/tutoriais/${id}`);
   const exercises = useApi<Exercicio[]>(`/api/exercicios?tutorialId=${id}`);
   const progress = useProgress();
   const [tab, setTab] = useState<(typeof tabs)[number]>("Conteúdo");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [confirmRestart, setConfirmRestart] = useState(false);
   const myAnswers = useApi<MinhaResposta[]>(`/api/exercicios/minhas-respostas?tutorialId=${id}`);
   const [answeredNow, setAnsweredNow] = useState<number[]>([]);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -45,6 +53,7 @@ export default function TutorialPage() {
   const pending = totalExercises - answered;
   const canComplete = pending === 0 && !!exercises.data && !!myAnswers.data;
   const goToExercises = () => { setTab("Exercícios"); contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); };
+  const goToContent = () => { setTab("Conteúdo"); contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); };
   const pendingText = !exercises.data || !myAnswers.data ? "Carregando exercícios..."
     : pending === 1 ? "Responda o exercício para concluir" : `Responda os ${pending} exercícios para concluir`;
   const computed = Math.min(99, Math.round(totalExercises > 0
@@ -126,7 +135,7 @@ export default function TutorialPage() {
         <div className="tabs" role="tablist">{tabs.map((item) => <button key={item} role="tab" aria-selected={tab === item} className={tab === item ? "active" : ""} onClick={() => setTab(item)}>{item}{item === "Exercícios" && totalExercises > 0 && <i className="tab-count">{answered}/{totalExercises}</i>}</button>)}</div>
         <div className="detail-body" ref={contentRef}>{tab === "Conteúdo"
           ? <LessonContent text={data.conteudo} />
-          : <Quiz tutorialId={data.id} onAnswered={(exerciseId) => setAnsweredNow((current) => [...current, exerciseId])} />}
+          : <Quiz tutorialId={data.id} onAnswered={(exerciseId) => setAnsweredNow((current) => [...current, exerciseId])} onReread={goToContent} />}
           {/* Fim do conteúdo/exercícios: onde a pessoa termina, ela pode concluir (depois de fazer os exercícios) */}
           <div className={`lesson-finish ${done ? "done" : ""}`}>
             {done
@@ -159,12 +168,14 @@ export default function TutorialPage() {
           ? <button className="complete-button locked" onClick={goToExercises} disabled={!exercises.data || !myAnswers.data}>
             <ClipboardCheck size={20} />{pendingText} ({answered}/{totalExercises})
           </button>
-          : <button className={`complete-button ${done ? "done" : ""} ${readyToComplete ? "ready" : ""}`} disabled={saving || !progress.data} onClick={() => saveStatus(done ? "EM_ANDAMENTO" : "CONCLUIDO")}>
+          : <button className={`complete-button ${done ? "done" : ""} ${readyToComplete ? "ready" : ""}`} disabled={saving || !progress.data || done} onClick={() => saveStatus("CONCLUIDO")}>
             {readyToComplete ? <Sparkles size={20} /> : <CircleCheck size={20} />}
             {saving ? "Salvando..." : done ? "Tutorial concluído" : readyToComplete ? "Tudo pronto! Marcar como concluído" : "Marcar como concluído"}
           </button>}
+        {done && <button className="secondary-button restart-button" onClick={() => setConfirmRestart(true)}><RotateCcw size={16} /> Refazer tutorial</button>}
         {error && <p className="login-error" role="alert">{error}</p>}
       </aside>
     </div>
+    {confirmRestart && <RestartTutorialDialog tutorialId={data.id} onClose={() => setConfirmRestart(false)} onRestarted={onRestarted} />}
   </div>;
 }

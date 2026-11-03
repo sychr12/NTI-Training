@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -231,26 +232,67 @@ public class ExercicioRepository {
 
     public List<MinhaRespostaResponse> findRespostas(Long usuarioId, Long tutorialId) {
         return jdbcClient.sql("""
-                SELECT r.exercicio_id, r.resposta, r.correto, e.resposta_correta, e.explicacao
+                SELECT r.exercicio_id, r.resposta, r.correto, r.tentativas, e.resposta_correta, e.explicacao
                 FROM respostas_exercicios r
                 JOIN exercicios e ON e.id = r.exercicio_id AND e.ativo = TRUE
                 WHERE r.usuario_id = :usuarioId AND e.tutorial_id = :tutorialId
                 """).param("usuarioId", usuarioId).param("tutorialId", tutorialId)
-                .query((rs, row) -> new MinhaRespostaResponse(rs.getLong("exercicio_id"), rs.getString("resposta"),
-                        rs.getBoolean("correto"), rs.getString("resposta_correta"), rs.getString("explicacao")))
+                .query(this::mapResposta)
                 .list();
     }
 
-    public void salvarResposta(Long usuarioId, Long exercicioId, String resposta, boolean correto) {
-        jdbcClient.sql("""
-                INSERT INTO respostas_exercicios (usuario_id, exercicio_id, resposta, correto)
-                VALUES (:usuarioId, :exercicioId, :resposta, :correto)
-                ON CONFLICT (usuario_id, exercicio_id) DO UPDATE SET
-                    resposta = EXCLUDED.resposta,
-                    correto = EXCLUDED.correto,
-                    atualizado_em = CURRENT_TIMESTAMP
+    public Optional<MinhaRespostaResponse> findResposta(Long usuarioId, Long exercicioId) {
+        return jdbcClient.sql("""
+                SELECT r.exercicio_id, r.resposta, r.correto, r.tentativas, e.resposta_correta, e.explicacao
+                FROM respostas_exercicios r
+                JOIN exercicios e ON e.id = r.exercicio_id
+                WHERE r.usuario_id = :usuarioId AND r.exercicio_id = :exercicioId
                 """).param("usuarioId", usuarioId).param("exercicioId", exercicioId)
-                .param("resposta", resposta).param("correto", correto).update();
+                .query(this::mapResposta)
+                .optional();
+    }
+
+    /*
+     * Primeira tentativa. Sem transacao: se outra requisicao gravou antes, a chave primaria barra esta
+     * e vale a que chegou primeiro.
+     */
+    public void registrarPrimeiraTentativa(Long usuarioId, Long exercicioId, String resposta, boolean correto) {
+        try {
+            jdbcClient.sql("""
+                    INSERT INTO respostas_exercicios (usuario_id, exercicio_id, resposta, correto, tentativas)
+                    VALUES (:usuarioId, :exercicioId, :resposta, :correto, 1)
+                    """).param("usuarioId", usuarioId).param("exercicioId", exercicioId)
+                    .param("resposta", resposta).param("correto", correto).update();
+        }
+        catch (DuplicateKeyException ignored) {
+            // Outra requisicao respondeu ao mesmo tempo.
+        }
+    }
+
+    /*
+     * Nova tentativa. A condicao no proprio UPDATE impede passar do limite com requisicoes simultaneas
+     * e impede trocar uma resposta ja encerrada.
+     */
+    public void registrarNovaTentativa(Long usuarioId, Long exercicioId, String resposta, boolean correto) {
+        jdbcClient.sql("""
+                UPDATE respostas_exercicios
+                SET
+                    resposta = :resposta,
+                    correto = :correto,
+                    tentativas = tentativas + 1,
+                    atualizado_em = CURRENT_TIMESTAMP
+                WHERE usuario_id = :usuarioId
+                  AND exercicio_id = :exercicioId
+                  AND correto = FALSE
+                  AND tentativas < :maximo
+                """).param("usuarioId", usuarioId).param("exercicioId", exercicioId)
+                .param("resposta", resposta).param("correto", correto)
+                .param("maximo", MinhaRespostaResponse.MAX_TENTATIVAS).update();
+    }
+
+    private MinhaRespostaResponse mapResposta(ResultSet rs, int rowNumber) throws SQLException {
+        return MinhaRespostaResponse.de(rs.getLong("exercicio_id"), rs.getString("resposta"), rs.getBoolean("correto"),
+                rs.getInt("tentativas"), rs.getString("resposta_correta"), rs.getString("explicacao"));
     }
 
     private Exercicio mapExercicio(
