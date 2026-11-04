@@ -6,7 +6,7 @@ import type { Visual } from "../lib/catalog";
 export function Brand({ compact = false }: { compact?: boolean }) {
   return <div className={`brand ${compact ? "brand-compact" : ""}`}>
     <span className="brand-mark"><GraduationCap size={22} strokeWidth={2.4} /></span>
-    <span><strong>NTI Training</strong>{!compact && <small>Aprendizado para futuros talentos</small>}</span>
+    <span><small>IDAM</small><strong>NTI Training</strong></span>
   </div>;
 }
 

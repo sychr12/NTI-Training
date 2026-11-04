@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
 import { Providers } from "./components/providers";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: { default: "NTI Training", template: "%s · NTI Training" },
-  description: "Portal interno de aprendizagem e desenvolvimento em tecnologia.",
+  title: { default: "NTI Training · IDAM", template: "%s · NTI Training · IDAM" },
+  description: "Portal interno do IDAM para aprendizagem e desenvolvimento em tecnologia.",
 };
 
 // Aplica o tema salvo antes da primeira pintura, evitando o "flash" claro no modo escuro.
@@ -18,7 +12,7 @@ const themeScript = `(function(){try{var t=localStorage.getItem("nti-theme");if(
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" className={geistSans.variable} data-theme="light" suppressHydrationWarning>
+    <html lang="pt-BR" data-theme="light" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

@@ -6,9 +6,9 @@ import { type CSSProperties, useEffect, useState } from "react";
 // Estilo da ilustração: true = cartoon (contorno de nanquim); false = flat.
 const CARTOON = true;
 
-const INK = "#14213d";
-const CHAIR = "#0845ae";
-const CHAIR_DARK = "#0a3580";
+const INK = "#173849";
+const CHAIR = "#14786c";
+const CHAIR_DARK = "#0b3f43";
 
 const highlights = [
   { title: "Aprenda no seu ritmo.", text: "Tutoriais curtos e práticos para resolver o dia a dia da TI." },
@@ -87,15 +87,15 @@ export function LearningShowcase() {
     <div className="showcase-scene">
       <LearningScene cartoon={CARTOON} lesson={lesson} onLessonEnd={() => setLessonIndex((value) => (value + 1) % lessons.length)} />
       <div className="float-card card-quiz" aria-hidden="true">
-        <span key={`quiz-icon-${completed.title}`} className="float-icon float-pop" style={{ color: "#15956b", background: "#e9f8f2" }}><CircleCheck size={18} /></span>
+        <span key={`quiz-icon-${completed.title}`} className="float-icon float-pop" style={{ color: "#0d675d", background: "#e2f5eb" }}><CircleCheck size={18} /></span>
         <span key={`quiz-${completed.title}`} className="float-swap"><strong>Quiz de {completed.topic}</strong><small>Concluído · +{completed.xp} XP</small></span>
       </div>
       <div className="float-card card-streak" aria-hidden="true">
-        <span className="float-icon" style={{ color: "#e26e2f", background: "#fff1e8" }}><Flame size={18} /></span>
+        <span className="float-icon" style={{ color: "#8a4b12", background: "#fbf3e8" }}><Flame size={18} /></span>
         <span><strong>5 dias seguidos</strong><small>Continue assim!</small></span>
       </div>
       <div className="float-card card-trail" aria-hidden="true">
-        <span className="float-icon" style={{ color: "#0b6ffb", background: "#eaf2ff" }}><Route size={18} /></span>
+        <span className="float-icon" style={{ color: "#14786c", background: "#dff2ec" }}><Route size={18} /></span>
         <span key={`trail-${lesson.title}`} className="float-swap"><strong>Trilha: {lesson.trail}</strong><span className="mini-track"><i style={{ width: `${lesson.trailProgress}%` }} /></span></span>
       </div>
     </div>
@@ -125,8 +125,8 @@ function LessonArt({ art, cartoon }: { art: LessonKind; cartoon: boolean }) {
       return <g>
         {[12, 24, 36].map((r, index) => <path key={r} className="scene-wifi" style={{ animationDelay: `${index * .25}s` }}
           d={`M${200 - r * .707} ${118 - r * .707} A${r} ${r} 0 0 1 ${200 + r * .707} ${118 - r * .707}`}
-          stroke="#0b6ffb" strokeWidth="5" fill="none" strokeLinecap="round" />)}
-        <circle cx="200" cy="118" r="5" fill="#0b6ffb" />
+          stroke="#14786c" strokeWidth="5" fill="none" strokeLinecap="round" />)}
+        <circle cx="200" cy="118" r="5" fill="#14786c" />
       </g>;
     case "password":
       return <g>
@@ -137,8 +137,8 @@ function LessonArt({ art, cartoon }: { art: LessonKind; cartoon: boolean }) {
       </g>;
     case "backup":
       return <g>
-        <path d="M184 104 h34 a8 8 0 0 0 0 -16 a12 12 0 0 0 -22 -5 a9 9 0 0 0 -12 8.5 a6.25 6.25 0 0 0 0 12.5 Z" fill="#eaf2ff" stroke={cartoon ? INK : "#0b6ffb"} strokeWidth="2" strokeLinejoin="round" />
-        <path className="scene-upload" d="M201 100 v-10 M197 94 l4 -4 l4 4" stroke="#0b6ffb" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M184 104 h34 a8 8 0 0 0 0 -16 a12 12 0 0 0 -22 -5 a9 9 0 0 0 -12 8.5 a6.25 6.25 0 0 0 0 12.5 Z" fill="#dff2ec" stroke={cartoon ? INK : "#14786c"} strokeWidth="2" strokeLinejoin="round" />
+        <path className="scene-upload" d="M201 100 v-10 M197 94 l4 -4 l4 4" stroke="#14786c" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M186 114 h10 l3 3 h17 a2 2 0 0 1 2 2 v13 a2 2 0 0 1 -2 2 h-30 a2 2 0 0 1 -2 -2 v-16 a2 2 0 0 1 2 -2 Z" fill="#ffd166" />
       </g>;
     default:
@@ -151,10 +151,10 @@ function LessonArt({ art, cartoon }: { art: LessonKind; cartoon: boolean }) {
         </g>
         {packets.map((packet) => <circle key={packet.delay} className="scene-packet no-ink" cx="200" cy="100" r="2.8" fill="#ff9f43" style={{ "--dx": `${packet.dx}px`, "--dy": `${packet.dy}px`, animationDelay: packet.delay } as CSSProperties} />)}
         {[[166, 78], [234, 78], [166, 122], [234, 122]].map(([x, y]) => <g key={`${x}-${y}`}>
-          <rect x={x - 9} y={y - 7} width="18" height="12" rx="3" fill="#eaf2ff" stroke={cartoon ? INK : "#0b6ffb"} strokeWidth={cartoon ? 2 : 1.6} />
-          <rect className="no-ink" x={x - 4} y={y + 5} width="8" height="2.5" rx="1" fill={cartoon ? INK : "#0b6ffb"} />
+          <rect x={x - 9} y={y - 7} width="18" height="12" rx="3" fill="#dff2ec" stroke={cartoon ? INK : "#14786c"} strokeWidth={cartoon ? 2 : 1.6} />
+          <rect className="no-ink" x={x - 4} y={y + 5} width="8" height="2.5" rx="1" fill={cartoon ? INK : "#14786c"} />
         </g>)}
-        <circle cx="200" cy="100" r="10" fill="#0b6ffb" />
+        <circle cx="200" cy="100" r="10" fill="#14786c" />
         <path d="M195 100 h10 M200 95 v10" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
       </g>;
   }
@@ -196,7 +196,7 @@ function LearningScene({ cartoon, lesson, onLessonEnd }: { cartoon: boolean; les
       <g key={lesson.title} className="scene-lesson">
         <text className="scene-board-title" x="198" y="46">{lesson.title}</text>
         <LessonArt art={lesson.art} cartoon={cartoon} />
-        <rect className="scene-line" x="264" y="70" width={lesson.lines[0]} height="7" rx="3.5" fill="#0b6ffb" />
+        <rect className="scene-line" x="264" y="70" width={lesson.lines[0]} height="7" rx="3.5" fill="#14786c" />
         <rect className="scene-line" style={{ animationDelay: ".25s" }} x="264" y="84" width={lesson.lines[1]} height="6" rx="3" fill="#c9d9f3" />
         <rect className="scene-line" style={{ animationDelay: ".5s" }} x="264" y="96" width={lesson.lines[2]} height="6" rx="3" fill="#c9d9f3" />
         <g className="scene-answer">
@@ -235,8 +235,8 @@ function LearningScene({ cartoon, lesson, onLessonEnd }: { cartoon: boolean; les
         <path d="M149 197 C146 160 204 160 201 197" stroke="#1f2a44" strokeWidth="4" fill="none" strokeLinecap="round" />
         <rect x="143" y="189" width="11" height="18" rx="5" fill="#1f2a44" />
         <rect x="196" y="189" width="11" height="18" rx="5" fill="#1f2a44" />
-        <rect className="no-ink" x="145.5" y="193" width="3" height="10" rx="1.5" fill="#0b6ffb" />
-        <rect className="no-ink" x="201.5" y="193" width="3" height="10" rx="1.5" fill="#0b6ffb" />
+        <rect className="no-ink" x="145.5" y="193" width="3" height="10" rx="1.5" fill="#14786c" />
+        <rect className="no-ink" x="201.5" y="193" width="3" height="10" rx="1.5" fill="#14786c" />
       </g>
     </g>
 
@@ -302,9 +302,9 @@ function LearningScene({ cartoon, lesson, onLessonEnd }: { cartoon: boolean; les
     {/* Balão de fala do mentor */}
     <g className="scene-bubble">
       <path d="M403 144 h28 a15 15 0 0 1 0 30 h-19 l-20 11 l8 -11.5 a15 15 0 0 1 3 -29.5 Z" fill="#ffffff" />
-      <circle className="scene-dot no-ink" cx="404" cy="159" r="3.3" fill="#0b6ffb" />
-      <circle className="scene-dot no-ink" style={{ animationDelay: ".15s" }} cx="417" cy="159" r="3.3" fill="#0b6ffb" />
-      <circle className="scene-dot no-ink" style={{ animationDelay: ".3s" }} cx="430" cy="159" r="3.3" fill="#0b6ffb" />
+      <circle className="scene-dot no-ink" cx="404" cy="159" r="3.3" fill="#14786c" />
+      <circle className="scene-dot no-ink" style={{ animationDelay: ".15s" }} cx="417" cy="159" r="3.3" fill="#14786c" />
+      <circle className="scene-dot no-ink" style={{ animationDelay: ".3s" }} cx="430" cy="159" r="3.3" fill="#14786c" />
     </g>
 
     {/* Cadeiras de escritório: assento, coluna e base com rodinhas (atrás das pernas) */}
@@ -332,7 +332,7 @@ function LearningScene({ cartoon, lesson, onLessonEnd }: { cartoon: boolean; les
     </g>}
 
     {/* Mesa */}
-    <rect x="40" y="300" width="440" height="13" rx="6.5" fill="#eaf2ff" />
+    <rect x="40" y="300" width="440" height="13" rx="6.5" fill="#dff2ec" />
     <rect className="no-ink" x="54" y="313" width="412" height="6" fill="#a9c3f0" opacity=".55" />
     <rect x="74" y="313" width="9" height="80" rx="3" fill="#cfdcf5" />
     <rect x="437" y="313" width="9" height="80" rx="3" fill="#cfdcf5" />
@@ -341,14 +341,14 @@ function LearningScene({ cartoon, lesson, onLessonEnd }: { cartoon: boolean; les
     {[175, 345].map((x, laptopIndex) => <g key={x}>
       <rect x={x - 55} y="294" width="110" height="7" rx="3.5" fill="#c3d3ef" />
       <rect x={x - 47} y="246" width="94" height="52" rx="7" fill="#f7faff" />
-      <circle className="scene-logo no-ink" style={{ animationDelay: laptopIndex ? "-1.2s" : "0s" }} cx={x} cy="272" r="10" fill="#0b6ffb" opacity=".18" />
-      <circle cx={x} cy="272" r="4.5" fill="#0b6ffb" />
+      <circle className="scene-logo no-ink" style={{ animationDelay: laptopIndex ? "-1.2s" : "0s" }} cx={x} cy="272" r="10" fill="#14786c" opacity=".18" />
+      <circle cx={x} cy="272" r="4.5" fill="#14786c" />
     </g>)}
 
     {/* Livros */}
     <rect x="243" y="293" width="36" height="7" rx="2" fill="#ff8a65" />
     <rect x="246" y="286" width="31" height="7" rx="2" fill="#ffd166" />
-    <rect x="242" y="279" width="34" height="7" rx="2" fill="#7b61ff" />
+    <rect x="242" y="279" width="34" height="7" rx="2" fill="#0f897a" />
 
     {/* Caneca */}
     <path className="scene-steam" d="M76 274 C72 268 80 264 76 258" stroke="#ffffff" strokeWidth="2" fill="none" strokeLinecap="round" />

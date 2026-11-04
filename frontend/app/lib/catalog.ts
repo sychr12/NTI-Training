@@ -6,15 +6,15 @@ export type Visual = { icon: LucideIcon; color: string; soft: string };
 
 // Aparência de cada categoria de conteúdo; categorias novas usam o visual padrão.
 const categoryVisuals: Record<string, Visual> = {
-  computador: { icon: Monitor, color: "#1769e0", soft: "#eaf2ff" },
-  internet: { icon: Wifi, color: "#15956b", soft: "#e9f8f2" },
-  programas: { icon: Code2, color: "#e26e2f", soft: "#fff1e8" },
-  redes: { icon: Network, color: "#1688c9", soft: "#e9f7fe" },
-  manutencao: { icon: Wrench, color: "#d69716", soft: "#fff7df" },
-  seguranca: { icon: ShieldCheck, color: "#df4d5c", soft: "#ffedf0" },
+  computador: { icon: Monitor, color: "#14786c", soft: "#dff2ec" },
+  internet: { icon: Wifi, color: "#0f897a", soft: "#dceee9" },
+  programas: { icon: Code2, color: "#927df2", soft: "#f1edff" },
+  redes: { icon: Network, color: "#39758c", soft: "#e8f2f5" },
+  manutencao: { icon: Wrench, color: "#8a4b12", soft: "#fbf3e8" },
+  seguranca: { icon: ShieldCheck, color: "#a94455", soft: "#faeef1" },
 };
 
-const defaultVisual: Visual = { icon: BookOpenText, color: "#7b61d1", soft: "#f1edff" };
+const defaultVisual: Visual = { icon: BookOpenText, color: "#0b3f43", soft: "#dff2ec" };
 
 /** Texto em minúsculas e sem acentos, para buscas e comparações ("Manutenção" → "manutencao"). */
 export function normalizeText(value: string) {

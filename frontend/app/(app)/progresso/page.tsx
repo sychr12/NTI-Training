@@ -11,10 +11,10 @@ import { relativeDate, useProgress } from "../../lib/progress";
 import type { Perfil, ProgressoTrilha, Tutorial } from "../../lib/types";
 
 const visuals: Record<string, Visual> = {
-  done: { icon: CircleCheck, color: "#15956b", soft: "#e9f8f2" },
-  doing: { icon: CirclePlay, color: "#7b61d1", soft: "#f1edff" },
-  trails: { icon: Route, color: "#1769e0", soft: "#eaf2ff" },
-  total: { icon: Trophy, color: "#d69716", soft: "#fff7df" },
+  done: { icon: CircleCheck, color: "#0d675d", soft: "#e2f5eb" },
+  doing: { icon: CirclePlay, color: "#0f897a", soft: "#dff2ec" },
+  trails: { icon: Route, color: "#39758c", soft: "#e8f2f5" },
+  total: { icon: Trophy, color: "#8a4b12", soft: "#fbf3e8" },
 };
 
 export default function ProgressPage() {
