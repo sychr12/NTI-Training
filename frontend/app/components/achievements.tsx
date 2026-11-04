@@ -66,8 +66,18 @@ export function MedalGrid() {
       </span>
       <span className="level-streak"><Flame size={18} /><b>{data.sequencia.atual}</b><small>dias seguidos<br />recorde: {data.sequencia.melhor}</small></span>
     </div>
+    <aside className="xp-guide" aria-label="Como ganhar experiência">
+      <span className="xp-guide-icon"><Zap size={20} /></span>
+      <div>
+        <strong>Como ganhar XP</strong>
+        <ul>
+          <li><b>+50 XP</b><span>Tutorial concluído</span></li>
+          <li><b>+10 XP</b><span>Exercício correto</span></li>
+          <li><b>+100 XP</b><span>Trilha completa</span></li>
+        </ul>
+      </div>
+    </aside>
     <div className="medal-grid">{data.medalhas.map((medalha) => <MedalCard key={medalha.codigo} medalha={medalha} />)}</div>
-    <p className="admin-note">XP: 50 por tutorial concluído, 10 por exercício acertado e 100 por trilha completa.</p>
   </>;
 }
 
