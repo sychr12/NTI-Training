@@ -1,4 +1,4 @@
--- Conteudo inicial seguro para todos os perfis, inclusive autenticacao pelo AD.
+﻿-- Conteudo inicial seguro para todos os perfis, inclusive autenticacao pelo AD.
 -- Fontes de referencia: NIST SP 800-63B-4, CISA Secure Our World, NCSC e OWASP.
 -- As insercoes sao idempotentes para permitir a execucao em toda inicializacao.
 
@@ -277,3 +277,179 @@ FROM (VALUES
 ) AS v(tutorial, pergunta, a, b, c, d, correta, explicacao)
 JOIN tutoriais tu ON tu.titulo = v.tutorial
 WHERE NOT EXISTS (SELECT 1 FROM exercicios e WHERE e.tutorial_id = tu.id AND e.pergunta = v.pergunta);
+
+-- Roteiro introdutório dos assuntos técnicos enviados para a formação de estagiários.
+-- Idempotente: pode ser aplicado novamente sem criar cópias do tutorial.
+INSERT INTO tutoriais (titulo, descricao, conteudo, categoria, nivel)
+SELECT 'Roteiro de assuntos técnicos para estagiários',
+       'Conheça as áreas de suporte de TI, os conceitos básicos e os cuidados antes de executar cada atividade.',
+       $$Este roteiro apresenta os assuntos técnicos previstos para a formação de estagiários. Estude o conceito, observe um técnico responsável, pratique em ambiente autorizado e registre o aprendizado. A lista não substitui procedimentos internos. Peça acompanhamento em ações que alterem contas, rede, dados, segurança ou hardware.
+
+Computadores e notebooks
+Aprenda a reconhecer componentes, sintomas e manutenção. Antes de formatar, trocar peças ou preparar equipamento, confirme autorização, patrimônio e backup; manuseie peças internas somente com orientação.
+
+1. Computadores e notebooks
+2. Formatação de computador e instalação do Windows.
+3. Preparação de computador para novo servidor.
+4. Configuração de computador no domínio institucional.
+5. Instalação e atualização de drivers.
+6. Substituição de memória RAM.
+7. Substituição de HD ou SSD.
+8. Clonagem de HD para SSD.
+9. Diagnóstico de computador que não liga.
+10. Diagnóstico de lentidão no Windows.
+11. Correção de tela azul (BSOD).
+12. Configuração de múltiplos monitores.
+13. Configuração de perfil de usuário.
+14. Limpeza de arquivos temporários.
+15. Verificação de integridade do disco.
+16. Substituição de fonte de alimentação.
+
+Impressoras e scanners
+Entenda a comunicação entre computador e impressora. Identifique modelo, conexão, fila, suprimentos e driver. Testes em equipamentos compartilhados devem ser combinados com o supervisor.
+
+17. Impressoras e scanners
+18. Instalação de impressora USB.
+19. Instalação de impressora de rede via IP.
+20. Configuração de impressora padrão.
+21. Instalação de impressora Zebra.
+22. Configuração de impressão de etiquetas.
+23. Limpeza da fila de impressão.
+24. Reinicialização do serviço de spooler.
+25. Compartilhamento de impressora na rede.
+26. Instalação de driver de impressora.
+27. Configuração de digitalização para PDF.
+28. Configuração de scanner em rede.
+29. Diagnóstico de impressora offline.
+30. Substituição de toner.
+31. Identificação de falhas de impressão.
+
+Rede e conectividade
+Separe falhas do computador, Wi-Fi, cabo e rede. IP identifica o dispositivo, gateway encaminha tráfego e DNS localiza serviços. Ping e Tracert ajudam no diagnóstico; não altere IP ou VLAN sem autorização.
+
+32. Rede e conectividade
+33. Configuração manual de endereço IP.
+34. Configuração de DNS e Gateway.
+35. Diagnóstico de ausência de internet.
+36. Teste de conectividade utilizando Ping.
+37. Diagnóstico utilizando Tracert.
+38. Identificação de endereço IP duplicado.
+39. Verificação de conectividade com Gateway.
+40. Identificação de ponto de rede.
+41. Teste de cabo de rede.
+42. Mapeamento de unidade de rede.
+43. Configuração de conexão Wi-Fi.
+44. Renovação de endereço DHCP.
+45. Limpeza de cache DNS.
+46. Identificação de problemas de cabeamento.
+47. Verificação de conectividade por VLAN.
+
+Active Directory e usuários
+O Active Directory organiza contas, computadores e grupos de acesso. Confirme identidade e chamado; criação de contas, senhas, grupos e permissões exigem aprovação e procedimento do NTI.
+
+48. Active Directory e usuários
+49. Criação de usuário no Active Directory.
+50. Redefinição de senha de usuário.
+51. Desbloqueio de conta institucional.
+52. Inclusão de usuário em grupo de segurança.
+53. Desativação de conta de usuário.
+54. Ingresso de computador no domínio.
+55. Remoção de computador do domínio.
+56. Verificação de políticas de grupo (GPO).
+57. Atualização de políticas utilizando GPUpdate.
+58. Diagnóstico de falha de autenticação.
+59. Configuração de perfil móvel ou local.
+60. Verificação de permissões de pastas compartilhadas.
+
+Sistemas e aplicativos
+Aprenda a instalar programas aprovados e investigar mensagens de erro. Use fontes e licenças autorizadas. Certificados e autenticação dão acesso a serviços; não os altere sem orientação.
+
+61. Sistemas e aplicativos
+62. Instalação do Microsoft Office.
+63. Configuração de Outlook.
+64. Configuração de assinatura de e-mail.
+65. Instalação do Google Chrome.
+66. Configuração de navegador padrão.
+67. Instalação de leitor de PDF.
+68. Instalação de certificados digitais.
+69. Configuração de Java.
+70. Instalação de aplicativos institucionais.
+71. Limpeza de cache do navegador.
+72. Correção de problemas de acesso a sistemas.
+73. Configuração de autenticação em sistemas institucionais.
+
+GLPI e atendimento técnico
+O chamado registra necessidade, equipamento, testes e solução. Escreva fatos para que outro técnico continue o atendimento; nunca registre senhas e confirme com o supervisor antes de encerrar.
+
+74. GLPI e atendimento técnico
+75. Abertura de chamado técnico.
+76. Atribuição de chamado para técnico.
+77. Classificação de incidentes.
+78. Registro de solução aplicada.
+79. Encaminhamento de chamado.
+80. Alteração de status de atendimento.
+81. Encerramento de chamado.
+82. Consulta ao histórico do equipamento.
+83. Cadastro de computador no inventário.
+84. Registro de empréstimo de equipamento.
+
+Backup e recuperação
+Backup é uma cópia para recuperar arquivos após perda ou falha. Antes de formatar, confirme pastas, destino autorizado e se os arquivos copiados abrem. Sincronização não é automaticamente backup validado.
+
+85. Backup e recuperação
+86. Backup dos arquivos do usuário antes da formatação.
+87. Backup de pastas institucionais.
+88. Restauração de arquivos.
+89. Verificação de integridade de backup.
+90. Cópia de arquivos para HD externo.
+91. Configuração de backup automatizado.
+92. Configuração do Cobian Backup.
+93. Recuperação de arquivos excluídos.
+94. Sincronização de arquivos com Google Drive.
+
+Segurança da informação
+Proteja contas, arquivos e equipamentos. Reconheça mensagens e dispositivos suspeitos; pare e comunique o NTI sem investigar sozinho, seguindo orientação para preservar evidências.
+
+95. Segurança da informação
+96. Identificação de e-mail de phishing.
+97. Verificação de links suspeitos.
+98. Identificação de arquivos maliciosos.
+99. Verificação de antivírus.
+100. Remoção de softwares não autorizados.
+101. Bloqueio de sessão do Windows.
+102. Alteração de senha comprometida.
+103. Procedimento em caso de suspeita de malware.
+104. Identificação de dispositivos USB desconhecidos.
+105. Comunicação de incidente de segurança.
+
+Telefonia e periféricos
+Periféricos incluem telefone IP, webcam, áudio e nobreak. Confira energia, cabos, portas e configurações. Não abra nobreaks; peça acompanhamento para qualquer questão elétrica.
+
+106. Telefonia e periféricos
+107. Configuração de telefone IP.
+108. Diagnóstico de telefone sem conexão.
+109. Configuração de webcam.
+110. Configuração de microfone e áudio.
+111. Instalação de teclado e mouse.
+112. Configuração de headset.
+113. Diagnóstico de problemas em portas USB.
+114. Instalação de nobreak.
+115. Teste de funcionamento de nobreak.
+
+Suporte e atendimento ao servidor
+Ouça a pessoa, entenda o impacto, registre sintomas e confirme a solução com ela. Transferências e trocas exigem autorização, privacidade e atualização do inventário.
+
+116. Suporte e atendimento ao servidor
+117. Recebimento de equipamento para manutenção.
+118. Atendimento presencial ao usuário.
+119. Atendimento remoto.
+120. Diagnóstico inicial de problemas.
+121. Preparação de equipamento para novo servidor.
+122. Transferência de arquivos entre computadores.
+123. Configuração de acesso a pastas compartilhadas.
+124. Configuração de acesso a sistemas institucionais.
+125. Substituição de equipamento com defeito.
+
+Proteja a privacidade do usuário e nunca peça ou registre senhas. Se houver risco de perda de dados, suspeita de malware, dúvida sobre autorização ou impacto em outras pessoas, pare e consulte o supervisor do NTI.$$,
+       'Suporte técnico', 'Iniciante'
+WHERE NOT EXISTS (SELECT 1 FROM tutoriais WHERE titulo = 'Roteiro de assuntos técnicos para estagiários');
